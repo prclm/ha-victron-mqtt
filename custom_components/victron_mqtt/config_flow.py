@@ -83,7 +83,7 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
 
     # Determine connection type defaults
     connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
-    
+
     # Set defaults based on connection type
     if connection_type == CONNECTION_TYPE_VRM:
         default_host = defaults.get(CONF_HOST, VRM_BROKER_HOST)
