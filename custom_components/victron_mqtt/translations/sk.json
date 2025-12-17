@@ -3,7 +3,8 @@
     "step": {
       "user": {
         "data": {
-          "host": "Názov hostiteľa alebo IP adresa Victron GX/Venus",
+          "connection_type": "Typ pripojenia",
+          "host": "Názov hostiteľa alebo IP adresa",
           "port": "Port MQTT",
           "username": "Používateľské meno",
           "password": "Heslo",
@@ -14,11 +15,12 @@
           "excluded_devices": "Vylúčené zariadenia"
         },
         "data_description": {
-          "host": "Názov hostiteľa alebo IP adresa zariadenia Victron, zvyčajne názov mDNS ako 'venus.local'",
-          "port": "Port MQTT na hostiteľovi. Normálne je to 1883.",
-          "username": "Používateľské meno pre zariadenie Victron, predvolene je prázdne. Toto nie je vaše VRM používateľské meno.",
-          "password": "Heslo pre zariadenie Victron, predvolene je prázdne. Toto nie je vaše VRM heslo.",
-          "ssl": "Určuje, či sa má použiť SSL na pripojenie k zariadeniu Victron. Normálne je vypnuté.",
+          "connection_type": "Vyberte si medzi lokálnym pripojením (priamo k zariadeniu Venus) alebo cloudovým pripojením VRM (Victron Remote Management).",
+          "host": "Pre lokálne: Názov hostiteľa alebo IP adresa zariadenia Victron (napr. 'venus.local'). Pre VRM: Použite 'mqtt.victronenergy.com'",
+          "port": "Pre lokálne: Port MQTT (obvykle 1883 alebo 8883). Pre VRM: Použite 8883.",
+          "username": "Pre lokálne: Zvyčajne prázdne (nie je potrebné pre zariadenia Victron). Pre VRM: Vaša emailová adresa portálu VRM.",
+          "password": "Pre lokálne: Heslo pre zariadenie Victron (predvolene prázdne, nie vaše VRM heslo). Pre VRM: Vaše heslo portálu VRM.",
+          "ssl": "Pre lokálne: Zvyčajne vypnuté, pokiaľ nepoužívate zabezpečené pripojenie. Pre VRM: Musí byť zapnuté (SSL vyžadované).",
           "root_topic_prefix": "Predpona koreňovej témy, ak sa používa cez bránu MQTT.",
           "update_frequency": "Frekvencia aktualizácie v sekundách. Predvolená hodnota je 30 sekúnd. Nastavte na 0 pre neustálu aktualizáciu.",
           "operation_mode": "Prevádzkový režim riadi, ktoré typy entít Home Assistant sa vytvárajú. 'read_only' (iba na čítanie) sprístupňuje iba senzory a binárne senzory (žiadne zapisovateľné entity), 'full' (plný) sprístupňuje všetky typy entít (senzory, binárne senzory, čísla, výbery, prepínače), 'experimental' (experimentálny) je vyhradený pre budúce použitie (dnes sa správa ako 'plný').",
@@ -31,7 +33,8 @@
     "step": {
       "init": {
         "data": {
-          "host": "Názov hostiteľa alebo IP adresa Victron Venus",
+          "connection_type": "Typ pripojenia",
+          "host": "Názov hostiteľa alebo IP adresa",
           "port": "Port MQTT",
           "username": "Používateľské meno",
           "password": "Heslo",
@@ -42,11 +45,12 @@
           "excluded_devices": "Vylúčené zariadenia"
         },
         "data_description": {
-          "host": "Názov hostiteľa alebo IP adresa zariadenia Victron, zvyčajne názov mDNS ako 'venus.local'",
-          "port": "Port MQTT na hostiteľovi. Normálne je to 1883.",
-          "username": "Používateľské meno pre zariadenie Victron, predvolene je prázdne. Toto nie je vaše VRM používateľské meno.",
-          "password": "Heslo pre zariadenie Victron, predvolene je prázdne. Toto nie je vaše VRM heslo.",
-          "ssl": "Určuje, či sa má použiť SSL na pripojenie k zariadeniu Victron. Normálne je vypnuté.",
+          "connection_type": "Vyberte si medzi lokálnym pripojením (priamo k zariadeniu Venus) alebo cloudovým pripojením VRM (Victron Remote Management).",
+          "host": "Pre lokálne: Názov hostiteľa alebo IP adresa zariadenia Victron (napr. 'venus.local'). Pre VRM: Použite 'mqtt.victronenergy.com'",
+          "port": "Pre lokálne: Port MQTT (obvykle 1883 alebo 8883). Pre VRM: Použite 8883.",
+          "username": "Pre lokálne: Zvyčajne prázdne (nie je potrebné pre zariadenia Victron). Pre VRM: Vaša emailová adresa portálu VRM.",
+          "password": "Pre lokálne: Heslo pre zariadenie Victron (predvolene prázdne, nie vaše VRM heslo). Pre VRM: Vaše heslo portálu VRM.",
+          "ssl": "Pre lokálne: Zvyčajne vypnuté, pokiaľ nepoužívate zabezpečené pripojenie. Pre VRM: Musí byť zapnuté (SSL vyžadované).",
           "root_topic_prefix": "Predpona koreňovej témy, ak sa používa cez bránu MQTT.",
           "update_frequency": "Frekvencia aktualizácie v sekundách. Predvolená hodnota je 30 sekúnd. Nastavte na 0 pre neustálu aktualizáciu.",
           "operation_mode": "Prevádzkový režim riadi, ktoré typy entít Home Assistant sa vytvárajú. 'read_only' (iba na čítanie) sprístupňuje iba senzory a binárne senzory (žiadne zapisovateľné entity), 'full' (plný) sprístupňuje všetky typy entít (senzory, binárne senzory, čísla, výbery, prepínače), 'experimental' (experimentálny) je vyhradený pre budúce použitie (dnes sa správa ako 'plný').",
@@ -1159,6 +1163,21 @@
       },
       "multiplus_assist_current_boost_factor": {
         "name": "Faktor zosilnenia prúdu asistencie"
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "local": "Lokálne (Priame pripojenie k zariadeniu Venus)",
+        "vrm": "VRM (Cloud Victron Remote Management)"
+      }
+    },
+    "operation_mode": {
+      "options": {
+        "read_only": "Iba na čítanie (iba senzory a binárne senzory)",
+        "full": "Plný (senzory + ovládateľné entity)",
+        "experimental": "Experimentálny (môže byť nestabilný)"
       }
     }
   }
