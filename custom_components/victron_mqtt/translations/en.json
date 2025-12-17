@@ -1311,7 +1311,8 @@
       "cannot_connect": "Failed to connect to host",
       "invalid_auth": "Authentication issue",
       "unknown": "Unknown failure",
-      "vrm_portal_id_required": "VRM Portal ID is required for VRM connections"
+      "vrm_portal_id_required": "VRM Portal ID is required for VRM connections",
+      "vrm_portal_id_invalid": "VRM Portal ID contains invalid characters. It should only contain letters, numbers, hyphens, and underscores."
     },
     "step": {
       "init": {

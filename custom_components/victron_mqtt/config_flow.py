@@ -57,8 +57,8 @@ from .const import (
     DEFAULT_SIMPLE_NAMING,
     DEFAULT_UPDATE_FREQUENCY_SECONDS,
     DOMAIN,
-    VRM_BROKER_HOST_TEMPLATE,
     VRM_BROKER_PORT,
+    get_vrm_broker_url,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -104,10 +104,10 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
 
     # Set defaults based on connection type
     if connection_type == CONNECTION_TYPE_VRM:
-        # For VRM, host is auto-generated from portal ID, so we make it optional with a computed default
+        # For VRM, host is auto-generated from portal ID
         vrm_portal_id = defaults.get(CONF_VRM_PORTAL_ID, "")
         if vrm_portal_id:
-            default_host = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
+            default_host = get_vrm_broker_url(vrm_portal_id)
         else:
             default_host = defaults.get(CONF_HOST, "")
         default_port = defaults.get(CONF_PORT, VRM_BROKER_PORT)
@@ -218,6 +218,30 @@ async def validate_input(data: dict[str, Any]) -> str:
     return hub.installation_id
 
 
+def _process_vrm_portal_id(user_input: dict[str, Any]) -> tuple[bool, str]:
+    """Process VRM Portal ID and generate broker URL if VRM connection.
+    
+    Args:
+        user_input: The user input dictionary
+        
+    Returns:
+        Tuple of (success, error_message). If success is True, error_message is empty.
+    """
+    if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
+        vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
+        if not vrm_portal_id:
+            return False, "vrm_portal_id_required"
+        
+        # Validate portal ID format (alphanumeric)
+        if not vrm_portal_id.replace("-", "").replace("_", "").isalnum():
+            return False, "vrm_portal_id_invalid"
+        
+        # Generate the VRM broker host from portal ID using the calculation logic
+        user_input[CONF_HOST] = get_vrm_broker_url(vrm_portal_id)
+    
+    return True, ""
+
+
 class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for victronvenus."""
 
@@ -240,18 +264,14 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.info("User input received: %s", user_input)
             
             # Process VRM Portal ID and generate host if VRM connection type
-            if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
-                vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
-                if vrm_portal_id:
-                    # Generate the VRM broker host from portal ID
-                    user_input[CONF_HOST] = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
-                else:
-                    errors["base"] = "vrm_portal_id_required"
-                    return self.async_show_form(
-                        step_id="user",
-                        data_schema=_get_user_schema(MappingProxyType(user_input)),
-                        errors=errors,
-                    )
+            success, error_msg = _process_vrm_portal_id(user_input)
+            if not success:
+                errors["base"] = error_msg
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=_get_user_schema(MappingProxyType(user_input)),
+                    errors=errors,
+                )
             
             data = {**user_input, CONF_SERIAL: self.serial, CONF_MODEL: self.model_name}
             data = {
@@ -419,11 +439,13 @@ class VictronMQTTOptionsFlow(OptionsFlow):
             _LOGGER.info("User input received: %s", user_input)
             
             # Process VRM Portal ID and generate host if VRM connection type
-            if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
-                vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
-                if vrm_portal_id:
-                    # Generate the VRM broker host from portal ID
-                    user_input[CONF_HOST] = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
+            success, error_msg = _process_vrm_portal_id(user_input)
+            if not success:
+                return self.async_show_form(
+                    step_id="init",
+                    data_schema=self._get_options_schema(),
+                    errors={"base": error_msg},
+                )
             
             try:
                 await validate_input(user_input)

@@ -66,7 +66,8 @@
 	  "cannot_connect": "Verbindung zum Host ist fehlgeschlagen",
 	  "invalid_auth": "Authentifizierungsfehler",
 	  "unknown": "Unbekannter Fehler",
-	  "vrm_portal_id_required": "VRM Portal-ID ist für VRM-Verbindungen erforderlich"
+	  "vrm_portal_id_required": "VRM Portal-ID ist für VRM-Verbindungen erforderlich",
+	  "vrm_portal_id_invalid": "VRM Portal-ID enthält ungültige Zeichen. Sie sollte nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten."
 	},
 	"abort": {
 	  "already_configured": "Bereits konfiguriert",

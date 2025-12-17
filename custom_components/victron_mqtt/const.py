@@ -30,9 +30,24 @@ CONNECTION_TYPE_LOCAL = "local"
 CONNECTION_TYPE_VRM = "vrm"
 
 # VRM defaults
-VRM_BROKER_HOST_TEMPLATE = "mqtt{portal_id}.victronenergy.com"
 VRM_BROKER_PORT = 8883
 VRM_BROKER_KEEPALIVE = 60
+
+
+def get_vrm_broker_url(portal_id: str) -> str:
+    """Generate VRM broker URL from portal ID.
+    
+    Args:
+        portal_id: The VRM Portal ID
+        
+    Returns:
+        The VRM broker URL in format mqtt{INDEX}.victronenergy.com
+    """
+    sum_chars = 0
+    for character in portal_id.lower().strip():
+        sum_chars += ord(character)
+    broker_index = sum_chars % 128
+    return f"mqtt{broker_index}.victronenergy.com"
 
 # Service names
 SERVICE_PUBLISH = "publish"
