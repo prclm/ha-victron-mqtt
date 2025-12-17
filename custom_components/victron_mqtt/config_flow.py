@@ -49,6 +49,7 @@ from .const import (
     CONF_SERIAL,
     CONF_SIMPLE_NAMING,
     CONF_UPDATE_FREQUENCY_SECONDS,
+    CONF_VRM_PORTAL_ID,
     CONNECTION_TYPE_LOCAL,
     CONNECTION_TYPE_VRM,
     DEFAULT_HOST,
@@ -56,7 +57,7 @@ from .const import (
     DEFAULT_SIMPLE_NAMING,
     DEFAULT_UPDATE_FREQUENCY_SECONDS,
     DOMAIN,
-    VRM_BROKER_HOST,
+    VRM_BROKER_HOST_TEMPLATE,
     VRM_BROKER_PORT,
 )
 
@@ -84,9 +85,31 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
     # Determine connection type defaults
     connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
 
+    # Build schema based on connection type
+    schema_dict = {
+        vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
+            SelectSelectorConfig(
+                options=[CONNECTION_TYPE_LOCAL, CONNECTION_TYPE_VRM],
+                translation_key="connection_type",
+            )
+        ),
+    }
+
+    # Add VRM Portal ID field only for VRM connections
+    if connection_type == CONNECTION_TYPE_VRM:
+        schema_dict[vol.Required(
+            CONF_VRM_PORTAL_ID,
+            description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
+        )] = str
+
     # Set defaults based on connection type
     if connection_type == CONNECTION_TYPE_VRM:
-        default_host = defaults.get(CONF_HOST, VRM_BROKER_HOST)
+        # For VRM, host is auto-generated from portal ID, so we make it optional with a computed default
+        vrm_portal_id = defaults.get(CONF_VRM_PORTAL_ID, "")
+        if vrm_portal_id:
+            default_host = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
+        else:
+            default_host = defaults.get(CONF_HOST, "")
         default_port = defaults.get(CONF_PORT, VRM_BROKER_PORT)
         default_ssl = defaults.get(CONF_SSL, True)
     else:
@@ -94,69 +117,77 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
         default_port = defaults.get(CONF_PORT, DEFAULT_PORT)
         default_ssl = defaults.get(CONF_SSL, False)
 
-    return vol.Schema(
-        {
-            vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
-                SelectSelectorConfig(
-                    options=[CONNECTION_TYPE_LOCAL, CONNECTION_TYPE_VRM],
-                    translation_key="connection_type",
-                )
-            ),
-            vol.Required(CONF_HOST, default=default_host): str,
-            vol.Required(CONF_PORT, default=default_port): int,
-            # Using suggested_value to be able to set empty string as default
-            vol.Optional(
-                CONF_USERNAME,
-                description={"suggested_value": f"{defaults.get(CONF_USERNAME, '')}"},
-            ): str,
-            vol.Optional(
-                CONF_PASSWORD,
-                description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
-            ): str,
-            vol.Required(CONF_SSL, default=default_ssl): bool,
-            vol.Required(CONF_OPERATION_MODE, default=op_default): SelectSelector(
-                SelectSelectorConfig(
-                    options=[
-                        OperationMode.READ_ONLY.value,
-                        OperationMode.FULL.value,
-                        OperationMode.EXPERIMENTAL.value,
-                    ],
-                    translation_key="operation_mode",
-                )
-            ),
-            vol.Optional(
-                CONF_SIMPLE_NAMING,
-                default=defaults.get(CONF_SIMPLE_NAMING, DEFAULT_SIMPLE_NAMING),
-            ): bool,
-            vol.Optional(
-                CONF_ROOT_TOPIC_PREFIX,
-                description={
-                    "suggested_value": f"{defaults.get(CONF_ROOT_TOPIC_PREFIX, '')}"
-                },
-            ): str,
-            vol.Optional(
-                CONF_UPDATE_FREQUENCY_SECONDS,
-                default=defaults.get(
-                    CONF_UPDATE_FREQUENCY_SECONDS, DEFAULT_UPDATE_FREQUENCY_SECONDS
-                ),
-            ): int,
-            vol.Optional(
-                CONF_EXCLUDED_DEVICES, default=defaults.get(CONF_EXCLUDED_DEVICES, [])
-            ): SelectSelector(
-                SelectSelectorConfig(
-                    options=DEVICE_CODES,
-                    multiple=True,
-                    mode=SelectSelectorMode.DROPDOWN,
-                )
-            ),
-            vol.Optional(
-                CONF_ELEVATED_TRACING,
-                description={
-                    "suggested_value": f"{defaults.get(CONF_ELEVATED_TRACING, '')}"
-                },
-            ): str,
-        }
+    # Add host field (read-only for VRM when portal ID is set)
+    schema_dict[vol.Required(CONF_HOST, default=default_host)] = str
+    schema_dict[vol.Required(CONF_PORT, default=default_port)] = int
+
+    # Username and password
+    schema_dict[vol.Optional(
+        CONF_USERNAME,
+        description={"suggested_value": f"{defaults.get(CONF_USERNAME, '')}"},
+    )] = str
+    schema_dict[vol.Optional(
+        CONF_PASSWORD,
+        description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
+    )] = str
+
+    # SSL
+    schema_dict[vol.Required(CONF_SSL, default=default_ssl)] = bool
+
+    # Operation mode
+    schema_dict[vol.Required(CONF_OPERATION_MODE, default=op_default)] = SelectSelector(
+        SelectSelectorConfig(
+            options=[
+                OperationMode.READ_ONLY.value,
+                OperationMode.FULL.value,
+                OperationMode.EXPERIMENTAL.value,
+            ],
+            translation_key="operation_mode",
+        )
     )
+
+    # Simple naming
+    schema_dict[vol.Optional(
+        CONF_SIMPLE_NAMING,
+        default=defaults.get(CONF_SIMPLE_NAMING, DEFAULT_SIMPLE_NAMING),
+    )] = bool
+
+    # Root topic prefix
+    schema_dict[vol.Optional(
+        CONF_ROOT_TOPIC_PREFIX,
+        description={
+            "suggested_value": f"{defaults.get(CONF_ROOT_TOPIC_PREFIX, '')}"
+        },
+    )] = str
+
+    # Update frequency
+    schema_dict[vol.Optional(
+        CONF_UPDATE_FREQUENCY_SECONDS,
+        default=defaults.get(
+            CONF_UPDATE_FREQUENCY_SECONDS, DEFAULT_UPDATE_FREQUENCY_SECONDS
+        ),
+    )] = int
+
+    # Excluded devices
+    schema_dict[vol.Optional(
+        CONF_EXCLUDED_DEVICES, default=defaults.get(CONF_EXCLUDED_DEVICES, [])
+    )] = SelectSelector(
+        SelectSelectorConfig(
+            options=DEVICE_CODES,
+            multiple=True,
+            mode=SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+    # Elevated tracing
+    schema_dict[vol.Optional(
+        CONF_ELEVATED_TRACING,
+        description={
+            "suggested_value": f"{defaults.get(CONF_ELEVATED_TRACING, '')}"
+        },
+    )] = str
+
+    return vol.Schema(schema_dict)
 
 
 STEP_USER_DATA_SCHEMA = _get_user_schema()
@@ -207,6 +238,21 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             _LOGGER.info("User input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host if VRM connection type
+            if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
+                vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
+                if vrm_portal_id:
+                    # Generate the VRM broker host from portal ID
+                    user_input[CONF_HOST] = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
+                else:
+                    errors["base"] = "vrm_portal_id_required"
+                    return self.async_show_form(
+                        step_id="user",
+                        data_schema=_get_user_schema(MappingProxyType(user_input)),
+                        errors=errors,
+                    )
+            
             data = {**user_input, CONF_SERIAL: self.serial, CONF_MODEL: self.model_name}
             data = {
                 k: v for k, v in data.items() if v is not None
@@ -371,6 +417,14 @@ class VictronMQTTOptionsFlow(OptionsFlow):
         )
         if user_input is not None:
             _LOGGER.info("User input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host if VRM connection type
+            if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
+                vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
+                if vrm_portal_id:
+                    # Generate the VRM broker host from portal ID
+                    user_input[CONF_HOST] = VRM_BROKER_HOST_TEMPLATE.format(portal_id=vrm_portal_id)
+            
             try:
                 await validate_input(user_input)
             except AuthenticationError:

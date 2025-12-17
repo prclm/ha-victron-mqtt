@@ -124,13 +124,19 @@ Connect to your Victron system remotely through the VRM cloud MQTT broker. This 
 3. Search for "Victron MQTT Integration"
 4. Select **Connection Type: VRM (Victron Remote Management cloud)**
 5. Enter the following details:
-   - Host: `mqtt.victronenergy.com`
-   - Port: `8883`
-   - Username: Your VRM portal email address
-   - Password: Your VRM portal password
-   - SSL: Enabled (required)
+   - **VRM Portal ID**: Your VRM Portal ID (e.g., `c0619ab123456`)
+     - You can find this in your VRM portal URL: `https://vrm.victronenergy.com/installation/{PORTAL_ID}/dashboard`
+     - Or in the Venus device under Settings > VRM online portal > VRM Portal ID
+   - **Host**: Automatically generated as `mqtt{PORTAL_ID}.victronenergy.com`
+   - **Port**: `8883`
+   - **Username**: Your VRM portal email address
+   - **Password**: Your VRM portal password
+   - **SSL**: Enabled (required)
 
-**Note:** This connection type requires an active VRM account and your installation must be registered and online in the VRM portal.
+**Note:** 
+- This connection type requires an active VRM account and your installation must be registered and online in the VRM portal.
+- The MQTT broker URL is automatically constructed from your VRM Portal ID.
+- A keep-alive interval of 60 seconds is automatically configured for VRM connections.
 
 #### Benefits of VRM Connection
 - Access your Victron system remotely from anywhere

@@ -16,6 +16,7 @@ CONF_EXCLUDED_DEVICES = "excluded_devices"
 CONF_SIMPLE_NAMING = "simple_naming"
 CONF_ELEVATED_TRACING = "elevated_tracing"
 CONF_CONNECTION_TYPE = "connection_type"
+CONF_VRM_PORTAL_ID = "vrm_portal_id"
 
 DEVICE_MESSAGE = "device"
 SENSOR_MESSAGE = "sensor"
@@ -29,8 +30,9 @@ CONNECTION_TYPE_LOCAL = "local"
 CONNECTION_TYPE_VRM = "vrm"
 
 # VRM defaults
-VRM_BROKER_HOST = "mqtt.victronenergy.com"
+VRM_BROKER_HOST_TEMPLATE = "mqtt{portal_id}.victronenergy.com"
 VRM_BROKER_PORT = 8883
+VRM_BROKER_KEEPALIVE = 60
 
 # Service names
 SERVICE_PUBLISH = "publish"
