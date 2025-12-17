@@ -98,16 +98,8 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
         {
             vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
                 SelectSelectorConfig(
-                    options=[
-                        SelectOptionDict(
-                            value=CONNECTION_TYPE_LOCAL,
-                            label="Local (Direct connection to Venus device)",
-                        ),
-                        SelectOptionDict(
-                            value=CONNECTION_TYPE_VRM,
-                            label="VRM (Victron Remote Management cloud)",
-                        ),
-                    ]
+                    options=[CONNECTION_TYPE_LOCAL, CONNECTION_TYPE_VRM],
+                    translation_key="connection_type",
                 )
             ),
             vol.Required(CONF_HOST, default=default_host): str,
@@ -125,19 +117,11 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
             vol.Required(CONF_OPERATION_MODE, default=op_default): SelectSelector(
                 SelectSelectorConfig(
                     options=[
-                        SelectOptionDict(
-                            value=OperationMode.READ_ONLY.value,
-                            label="Read-only (sensors & binary sensors only)",
-                        ),
-                        SelectOptionDict(
-                            value=OperationMode.FULL.value,
-                            label="Full (sensors + controllable entities)",
-                        ),
-                        SelectOptionDict(
-                            value=OperationMode.EXPERIMENTAL.value,
-                            label="Experimental (may be unstable)",
-                        ),
-                    ]
+                        OperationMode.READ_ONLY.value,
+                        OperationMode.FULL.value,
+                        OperationMode.EXPERIMENTAL.value,
+                    ],
+                    translation_key="operation_mode",
                 )
             ),
             vol.Optional(
@@ -370,6 +354,7 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_INSTALLATION_ID: self.installation_id,
                 CONF_MODEL: self.model_name,
                 CONF_SIMPLE_NAMING: DEFAULT_SIMPLE_NAMING,
+                CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
             },
         )
 
