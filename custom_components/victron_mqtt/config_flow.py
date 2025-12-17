@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import logging
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlparse
 
@@ -38,6 +39,7 @@ from homeassistant.helpers.selector import (
 from homeassistant.helpers.service_info.ssdp import SsdpServiceInfo
 
 from .const import (
+    CONF_CONNECTION_TYPE,
     CONF_ELEVATED_TRACING,
     CONF_EXCLUDED_DEVICES,
     CONF_INSTALLATION_ID,
@@ -47,11 +49,15 @@ from .const import (
     CONF_SERIAL,
     CONF_SIMPLE_NAMING,
     CONF_UPDATE_FREQUENCY_SECONDS,
+    CONNECTION_TYPE_LOCAL,
+    CONNECTION_TYPE_VRM,
     DEFAULT_HOST,
     DEFAULT_PORT,
     DEFAULT_SIMPLE_NAMING,
     DEFAULT_UPDATE_FREQUENCY_SECONDS,
     DOMAIN,
+    VRM_BROKER_HOST,
+    VRM_BROKER_PORT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,10 +81,37 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
         else op_mode_default
     )
 
+    # Determine connection type defaults
+    connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
+    
+    # Set defaults based on connection type
+    if connection_type == CONNECTION_TYPE_VRM:
+        default_host = defaults.get(CONF_HOST, VRM_BROKER_HOST)
+        default_port = defaults.get(CONF_PORT, VRM_BROKER_PORT)
+        default_ssl = defaults.get(CONF_SSL, True)
+    else:
+        default_host = defaults.get(CONF_HOST, DEFAULT_HOST)
+        default_port = defaults.get(CONF_PORT, DEFAULT_PORT)
+        default_ssl = defaults.get(CONF_SSL, False)
+
     return vol.Schema(
         {
-            vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, DEFAULT_HOST)): str,
-            vol.Required(CONF_PORT, default=defaults.get(CONF_PORT, DEFAULT_PORT)): int,
+            vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(
+                            value=CONNECTION_TYPE_LOCAL,
+                            label="Local (Direct connection to Venus device)",
+                        ),
+                        SelectOptionDict(
+                            value=CONNECTION_TYPE_VRM,
+                            label="VRM (Victron Remote Management cloud)",
+                        ),
+                    ]
+                )
+            ),
+            vol.Required(CONF_HOST, default=default_host): str,
+            vol.Required(CONF_PORT, default=default_port): int,
             # Using suggested_value to be able to set empty string as default
             vol.Optional(
                 CONF_USERNAME,
@@ -88,7 +121,7 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
                 CONF_PASSWORD,
                 description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
             ): str,
-            vol.Required(CONF_SSL, default=defaults.get(CONF_SSL, False)): bool,
+            vol.Required(CONF_SSL, default=default_ssl): bool,
             vol.Required(CONF_OPERATION_MODE, default=op_default): SelectSelector(
                 SelectSelectorConfig(
                     options=[

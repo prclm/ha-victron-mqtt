@@ -80,7 +80,7 @@ Note: Restart Home Assistant manually if you did not use the `--restart` flag.
 
 ## Configuration
 
-The integration can be configured in three ways:
+The integration can be configured in four ways:
 
 ### Method 1: Automatic Discovery
 1. Your Victron device should be automatically discovered if it has MQTT enabled
@@ -88,11 +88,12 @@ The integration can be configured in three ways:
 3. Look for the "Victron MQTT Integration" in the discovered section
 4. Follow the configuration flow
 
-### Method 2: Manual Configuration (Direct Connection)
+### Method 2: Manual Configuration (Direct Connection to Local Device)
 1. Go to Settings > Devices & Services
 2. Click "Add Integration"
 3. Search for "Victron MQTT Integration"
-4. Enter the following details:
+4. Select **Connection Type: Local (Direct connection to Venus device)**
+5. Enter the following details:
    - Host: Your Victron device's hostname or IP (default: venus.local)
    - Port: (See below)
    - Username: (See below)
@@ -115,7 +116,28 @@ Specify values for the Port, Username, Password and SSL options based on the set
    - Password: The password defined when setting the security profile
    - SSL: Enabled
 
-### Method 3: Using Home Assistant MQTT Broker (Bridged Configuration)
+### Method 3: VRM Cloud Connection (Victron Remote Management)
+Connect to your Victron system remotely through the VRM cloud MQTT broker. This is useful when you don't have direct network access to your Venus device.
+
+1. Go to Settings > Devices & Services
+2. Click "Add Integration"
+3. Search for "Victron MQTT Integration"
+4. Select **Connection Type: VRM (Victron Remote Management cloud)**
+5. Enter the following details:
+   - Host: `mqtt.victronenergy.com`
+   - Port: `8883`
+   - Username: Your VRM portal email address
+   - Password: Your VRM portal password
+   - SSL: Enabled (required)
+
+**Note:** This connection type requires an active VRM account and your installation must be registered and online in the VRM portal.
+
+#### Benefits of VRM Connection
+- Access your Victron system remotely from anywhere
+- No need for port forwarding or VPN
+- Works even when Home Assistant is not on the same network as your Venus device
+
+### Method 4: Using Home Assistant MQTT Broker (Bridged Configuration)
 Some users prefer to reduce the direct load on their Victron server and use bridge from the Venus device to a local mosquitto server running as add-on on the HAOS.
 
 #### Prerequisites
@@ -139,6 +161,7 @@ Some users prefer to reduce the direct load on their Victron server and use brid
 2. **Restart the Mosquitto Add-on** to apply the bridge configuration
 
 3. **Configure the Integration**: When setting up the Victron MQTT Integration:
+   - Connection Type: Local (Direct connection to Venus device)
    - Host: `core-mosquitto` (the internal hostname for the HA MQTT broker)
    - Port: `1883`
    - Username: Your MQTT broker username

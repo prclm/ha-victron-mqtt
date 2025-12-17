@@ -15,6 +15,7 @@ CONF_OPERATION_MODE = "operation_mode"
 CONF_EXCLUDED_DEVICES = "excluded_devices"
 CONF_SIMPLE_NAMING = "simple_naming"
 CONF_ELEVATED_TRACING = "elevated_tracing"
+CONF_CONNECTION_TYPE = "connection_type"
 
 DEVICE_MESSAGE = "device"
 SENSOR_MESSAGE = "sensor"
@@ -22,6 +23,14 @@ SENSOR_MESSAGE = "sensor"
 DEFAULT_HOST = "venus.local."
 DEFAULT_PORT = 1883
 DEFAULT_UPDATE_FREQUENCY_SECONDS = 30
+
+# Connection types
+CONNECTION_TYPE_LOCAL = "local"
+CONNECTION_TYPE_VRM = "vrm"
+
+# VRM defaults
+VRM_BROKER_HOST = "mqtt.victronenergy.com"
+VRM_BROKER_PORT = 8883
 
 # Service names
 SERVICE_PUBLISH = "publish"
