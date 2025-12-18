@@ -13,7 +13,7 @@
 		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
 		  "operation_mode": "Betriebsmodus",
 		  "excluded_devices": "Ignorierte Geräte",
-		  "vrm_portal_id": "VRM Portal-ID"
+		  "vrm_portal_id": "VRM Portal-ID (Nur für VRM erforderlich)"
 		},
 		"data_description": {
 		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management).",
@@ -26,7 +26,7 @@
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
 		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich momentan wie 'full').",
 		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
-		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert."
+		  "vrm_portal_id": "Nur für VRM-Verbindungen erforderlich. Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
 		}
 	  }
 	}
@@ -58,7 +58,7 @@
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
 		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich heute wie 'full').",
 		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
-		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert."
+		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
 		}
 	  }
 	},

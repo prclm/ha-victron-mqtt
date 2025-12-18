@@ -85,7 +85,7 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
     # Determine connection type defaults
     connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
 
-    # Build schema based on connection type
+    # Build schema - always include all fields for compatibility
     schema_dict = {
         vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
             SelectSelectorConfig(
@@ -95,12 +95,11 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
         ),
     }
 
-    # Add VRM Portal ID field only for VRM connections
-    if connection_type == CONNECTION_TYPE_VRM:
-        schema_dict[vol.Required(
-            CONF_VRM_PORTAL_ID,
-            description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
-        )] = str
+    # Always add VRM Portal ID field (optional) - only required when VRM is selected
+    schema_dict[vol.Optional(
+        CONF_VRM_PORTAL_ID,
+        description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
+    )] = str
 
     # Set defaults based on connection type
     if connection_type == CONNECTION_TYPE_VRM:

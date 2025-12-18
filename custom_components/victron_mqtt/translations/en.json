@@ -15,7 +15,7 @@
           "ssl": "Use SSL",
           "update_frequency": "Update frequency (seconds)",
           "username": "Username",
-          "vrm_portal_id": "VRM Portal ID"
+          "vrm_portal_id": "VRM Portal ID (Required for VRM only)"
         },
         "data_description": {
           "connection_type": "Choose between local connection (direct to Venus device) or VRM cloud connection (Victron Remote Management).",
@@ -1344,7 +1344,7 @@
           "ssl": "For Local: Usually disabled unless using secure connection. For VRM: Must be enabled (SSL required).",
           "update_frequency": "Update frequency in seconds. Default is 30 seconds. Set to 0 to update always.",
           "username": "For Local: Usually empty (not needed by Victron devices). For VRM: Your VRM portal email address.",
-          "vrm_portal_id": "Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID)"
+          "vrm_portal_id": "Required only for VRM connections. Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID). Leave empty for Local connections"
         }
       }
     }
