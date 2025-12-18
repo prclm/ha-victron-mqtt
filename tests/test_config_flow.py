@@ -6,6 +6,7 @@ import pytest
 from victron_mqtt import CannotConnectError, OperationMode
 
 from custom_components.victron_mqtt.const import (
+    CONF_CONNECTION_TYPE,
     CONF_EXCLUDED_DEVICES,
     CONF_INSTALLATION_ID,
     CONF_OPERATION_MODE,
@@ -14,6 +15,9 @@ from custom_components.victron_mqtt.const import (
     CONF_SERIAL,
     CONF_SIMPLE_NAMING,
     CONF_UPDATE_FREQUENCY_SECONDS,
+    CONF_VRM_PORTAL_ID,
+    CONNECTION_TYPE_LOCAL,
+    CONNECTION_TYPE_VRM,
     DEFAULT_PORT,
     DEFAULT_SIMPLE_NAMING,
     DEFAULT_UPDATE_FREQUENCY_SECONDS,
@@ -40,6 +44,7 @@ MOCK_SERIAL = "HQ2234ABCDE"
 MOCK_MODEL = "Cerbo GX"
 MOCK_FRIENDLY_NAME = "Venus GX"
 MOCK_HOST = "192.168.1.100"
+MOCK_VRM_PORTAL_ID = "c0619ab123456"
 
 
 @pytest.fixture
@@ -56,8 +61,9 @@ def mock_victron_hub():
 
 
 @pytest.mark.usefixtures("mock_victron_hub")
-async def test_user_flow_full_config(hass: HomeAssistant) -> None:
-    """Test the full user flow with all configuration options."""
+async def test_user_flow_local_full_config(hass: HomeAssistant) -> None:
+    """Test the full user flow with local connection and all configuration options."""
+    # Step 1: Choose connection type
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
@@ -65,15 +71,33 @@ async def test_user_flow_full_config(hass: HomeAssistant) -> None:
     assert result["step_id"] == "user"
     assert result["errors"] == {}
 
+    # Step 2: Select local connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "local"
+
+    # Step 3: Configure local connection
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
-            CONF_OPERATION_MODE: OperationMode.FULL.value,
             CONF_USERNAME: "test-username",
             CONF_PASSWORD: "test-password",
             CONF_SSL: False,
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"
+
+    # Step 4: Configure additional settings
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_OPERATION_MODE: OperationMode.FULL.value,
             CONF_SIMPLE_NAMING: True,
             CONF_ROOT_TOPIC_PREFIX: "N/test",
             CONF_UPDATE_FREQUENCY_SECONDS: 60,
@@ -83,6 +107,7 @@ async def test_user_flow_full_config(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == f"Victron OS {MOCK_INSTALLATION_ID}"
     assert result["data"] == {
+        CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
         CONF_HOST: MOCK_HOST,
         CONF_PORT: DEFAULT_PORT,
         CONF_OPERATION_MODE: OperationMode.FULL.value,
@@ -98,20 +123,37 @@ async def test_user_flow_full_config(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.usefixtures("mock_victron_hub")
-async def test_user_flow_minimal_config(hass: HomeAssistant) -> None:
-    """Test the user flow with minimal configuration."""
+async def test_user_flow_local_minimal_config(hass: HomeAssistant) -> None:
+    """Test the user flow with local connection and minimal configuration."""
+    # Step 1: Choose connection type
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "user"
 
+    # Step 2: Select local connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
+    assert result["step_id"] == "local"
+
+    # Step 3: Configure local connection (minimal)
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_SSL: False,
+        },
+    )
+    assert result["step_id"] == "settings"
+
+    # Step 4: Configure additional settings (defaults)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
@@ -120,6 +162,7 @@ async def test_user_flow_minimal_config(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == f"Victron OS {MOCK_INSTALLATION_ID}"
     assert result["data"] == {
+        CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
         CONF_HOST: MOCK_HOST,
         CONF_PORT: DEFAULT_PORT,
         CONF_SSL: False,
@@ -131,22 +174,88 @@ async def test_user_flow_minimal_config(hass: HomeAssistant) -> None:
     }
 
 
+@pytest.mark.usefixtures("mock_victron_hub")
+async def test_user_flow_vrm_config(hass: HomeAssistant) -> None:
+    """Test the user flow with VRM connection."""
+    # Step 1: Choose connection type
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+
+    # Step 2: Select VRM connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_VRM},
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "vrm"
+
+    # Step 3: Configure VRM connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_VRM_PORTAL_ID: MOCK_VRM_PORTAL_ID,
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test-vrm-password",
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"
+
+    # Step 4: Configure additional settings
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_OPERATION_MODE: OperationMode.FULL.value,
+            CONF_SIMPLE_NAMING: True,
+            CONF_UPDATE_FREQUENCY_SECONDS: 30,
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == f"Victron OS {MOCK_INSTALLATION_ID}"
+    assert CONF_CONNECTION_TYPE in result["data"]
+    assert result["data"][CONF_CONNECTION_TYPE] == CONNECTION_TYPE_VRM
+    assert result["data"][CONF_VRM_PORTAL_ID] == MOCK_VRM_PORTAL_ID
+    assert result["data"][CONF_USERNAME] == "test@example.com"
+    assert result["data"][CONF_PASSWORD] == "test-vrm-password"
+    assert result["data"][CONF_SSL] is True
+    assert result["data"][CONF_PORT] == 8883
+
+
 async def test_user_flow_cannot_connect(
     hass: HomeAssistant, mock_victron_hub: MagicMock
 ) -> None:
     """Test we handle cannot connect error."""
+    # Step 1: Choose connection type
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
 
-    mock_victron_hub.return_value.connect.side_effect = CannotConnectError
+    # Step 2: Select local connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
 
+    # Step 3: Configure local connection
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_SSL: False,
+        },
+    )
+
+    # Step 4: Configure settings - should fail with cannot connect
+    mock_victron_hub.return_value.connect.side_effect = CannotConnectError
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
@@ -160,18 +269,33 @@ async def test_user_flow_unknown_error(
     hass: HomeAssistant, mock_victron_hub: MagicMock
 ) -> None:
     """Test we handle unknown errors."""
+    # Step 1: Choose connection type
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
 
-    mock_victron_hub.return_value.connect.side_effect = Exception("Unexpected error")
+    # Step 2: Select local connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
 
+    # Step 3: Configure local connection
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_SSL: False,
+        },
+    )
+
+    # Step 4: Configure settings - should fail with unknown error
+    mock_victron_hub.return_value.connect.side_effect = Exception("Unexpected error")
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
@@ -187,9 +311,6 @@ async def test_user_flow_unknown_error(
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
-            CONF_HOST: MOCK_HOST,
-            CONF_PORT: DEFAULT_PORT,
-            CONF_SSL: False,
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
@@ -211,17 +332,32 @@ async def test_user_flow_already_configured(hass: HomeAssistant) -> None:
     )
     mock_config_entry.add_to_hass(hass)
 
+    # Step 1: Choose connection type
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": SOURCE_USER},
     )
 
+    # Step 2: Select local connection
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
+
+    # Step 3: Configure local connection
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_SSL: False,
+        },
+    )
+
+    # Step 4: Configure settings
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
@@ -334,12 +470,13 @@ async def test_ssdp_flow_already_configured(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.usefixtures("mock_victron_hub")
-async def test_options_flow_success(hass: HomeAssistant) -> None:
-    """Test options flow allows updating configuration."""
+async def test_options_flow_local_success(hass: HomeAssistant) -> None:
+    """Test options flow allows updating local configuration."""
     mock_config_entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=MOCK_INSTALLATION_ID,
         data={
+            CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_INSTALLATION_ID: MOCK_INSTALLATION_ID,
@@ -352,22 +489,39 @@ async def test_options_flow_success(hass: HomeAssistant) -> None:
     )
     mock_config_entry.add_to_hass(hass)
 
+    # Step 1: Choose connection type
     result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
 
+    # Step 2: Select local connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
+    assert result["step_id"] == "local_options"
+
+    # Step 3: Configure local connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "192.168.1.200",
+            CONF_PORT: 1883,
+            CONF_USERNAME: "new-user",
+            CONF_PASSWORD: "new-pass",
+            CONF_SSL: True,
+        },
+    )
+    assert result["step_id"] == "settings_options"
+
+    # Step 4: Configure additional settings
     with patch(
         "homeassistant.config_entries.ConfigEntries.async_reload"
     ) as mock_reload:
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
-            user_input={
-                CONF_HOST: "192.168.1.200",
-                CONF_PORT: 1883,
-                CONF_USERNAME: "new-user",
-                CONF_PASSWORD: "new-pass",
-                CONF_SSL: True,
+            {
                 CONF_SIMPLE_NAMING: True,
                 CONF_ROOT_TOPIC_PREFIX: "N/updated",
                 CONF_UPDATE_FREQUENCY_SECONDS: 45,
@@ -375,18 +529,79 @@ async def test_options_flow_success(hass: HomeAssistant) -> None:
         )
 
         assert result["type"] is FlowResultType.CREATE_ENTRY
-        assert mock_config_entry.data == {
-            CONF_HOST: "192.168.1.200",
-            CONF_PORT: 1883,
-            CONF_USERNAME: "new-user",
-            CONF_PASSWORD: "new-pass",
+        assert mock_config_entry.data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_LOCAL
+        assert mock_config_entry.data[CONF_HOST] == "192.168.1.200"
+        assert mock_config_entry.data[CONF_PORT] == 1883
+        assert mock_config_entry.data[CONF_USERNAME] == "new-user"
+        assert mock_config_entry.data[CONF_PASSWORD] == "new-pass"
+        assert mock_config_entry.data[CONF_SSL] is True
+        assert mock_config_entry.data[CONF_SIMPLE_NAMING] is True
+        assert mock_config_entry.data[CONF_ROOT_TOPIC_PREFIX] == "N/updated"
+        assert mock_config_entry.data[CONF_UPDATE_FREQUENCY_SECONDS] == 45
+        assert len(mock_reload.mock_calls) == 1
+
+
+@pytest.mark.usefixtures("mock_victron_hub")
+async def test_options_flow_vrm_success(hass: HomeAssistant) -> None:
+    """Test options flow allows updating VRM configuration."""
+    mock_config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=MOCK_INSTALLATION_ID,
+        data={
+            CONF_CONNECTION_TYPE: CONNECTION_TYPE_VRM,
+            CONF_VRM_PORTAL_ID: MOCK_VRM_PORTAL_ID,
+            CONF_USERNAME: "old@example.com",
+            CONF_PASSWORD: "old-password",
+            CONF_HOST: "mqtt111.victronenergy.com",
+            CONF_PORT: 8883,
             CONF_SSL: True,
-            CONF_SIMPLE_NAMING: True,
-            CONF_ROOT_TOPIC_PREFIX: "N/updated",
-            CONF_UPDATE_FREQUENCY_SECONDS: 45,
-            CONF_OPERATION_MODE: OperationMode.FULL.value,
-            CONF_EXCLUDED_DEVICES: [],
-        }
+            CONF_INSTALLATION_ID: MOCK_INSTALLATION_ID,
+            CONF_SIMPLE_NAMING: False,
+            CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
+        },
+    )
+    mock_config_entry.add_to_hass(hass)
+
+    # Step 1: Choose connection type
+    result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
+    assert result["step_id"] == "init"
+
+    # Step 2: Select VRM connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_VRM},
+    )
+    assert result["step_id"] == "vrm_options"
+
+    # Step 3: Configure VRM connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_VRM_PORTAL_ID: MOCK_VRM_PORTAL_ID,
+            CONF_USERNAME: "new@example.com",
+            CONF_PASSWORD: "new-password",
+        },
+    )
+    assert result["step_id"] == "settings_options"
+
+    # Step 4: Configure additional settings
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_reload"
+    ) as mock_reload:
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                CONF_SIMPLE_NAMING: True,
+                CONF_UPDATE_FREQUENCY_SECONDS: 60,
+            },
+        )
+
+        assert result["type"] is FlowResultType.CREATE_ENTRY
+        assert mock_config_entry.data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_VRM
+        assert mock_config_entry.data[CONF_VRM_PORTAL_ID] == MOCK_VRM_PORTAL_ID
+        assert mock_config_entry.data[CONF_USERNAME] == "new@example.com"
+        assert mock_config_entry.data[CONF_PASSWORD] == "new-password"
+        assert mock_config_entry.data[CONF_SIMPLE_NAMING] is True
         assert len(mock_reload.mock_calls) == 1
 
 
@@ -398,6 +613,7 @@ async def test_options_flow_cannot_connect(
         domain=DOMAIN,
         unique_id=MOCK_INSTALLATION_ID,
         data={
+            CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
             CONF_HOST: MOCK_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_INSTALLATION_ID: MOCK_INSTALLATION_ID,
@@ -408,16 +624,31 @@ async def test_options_flow_cannot_connect(
     )
     mock_config_entry.add_to_hass(hass)
 
+    # Step 1: Choose connection type
     result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
 
+    # Step 2: Select local connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL},
+    )
+
+    # Step 3: Configure local connection
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "192.168.1.200",
+            CONF_PORT: 1883,
+            CONF_SSL: False,
+        },
+    )
+
+    # Step 4: Configure settings - should fail with cannot connect
     mock_victron_hub.return_value.connect.side_effect = CannotConnectError
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        user_input={
-            CONF_HOST: "192.168.1.200",
-            CONF_PORT: 1883,
-            CONF_SSL: False,
+        {
             CONF_SIMPLE_NAMING: False,
             CONF_UPDATE_FREQUENCY_SECONDS: DEFAULT_UPDATE_FREQUENCY_SECONDS,
         },
