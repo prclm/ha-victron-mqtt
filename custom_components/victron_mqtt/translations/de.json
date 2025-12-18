@@ -3,7 +3,8 @@
 	"step": {
 	  "user": {
 		"data": {
-		  "host": "Victron-Venus-Hostname oder IP",
+		  "connection_type": "Verbindungstyp",
+		  "host": "Hostname oder IP-Adresse",
 		  "port": "MQTT-Port",
 		  "username": "Benutzername",
 		  "password": "Passwort",
@@ -11,18 +12,21 @@
 		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
 		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
 		  "operation_mode": "Betriebsmodus",
-		  "excluded_devices": "Ignorierte Geräte"
+		  "excluded_devices": "Ignorierte Geräte",
+		  "vrm_portal_id": "VRM Portal-ID (Nur für VRM erforderlich)"
 		},
 		"data_description": {
-		  "host": "Hostname oder IP-Adresse des Victron-Geräts, meistens mDNS-Name wie 'venus.local'",
-		  "port": "Der MQTT-Port vom Gerät. Standard ist 1883.",
-		  "username": "Benutzername für das Victron-Gerät, standardmäßig leer lassen. Dies ist NICHT Ihr VRM-Benutzername.",
-		  "password": "Passwort für das Victron-Gerät, standardmäßig leer lassen. Dies ist NICHT Ihr VRM-Passwort.",
-		  "ssl": "Gibt an, ob SSL Verschlüsselung zur Verbindung mit dem Victron-Gerät verwendet wird. Normalerweise deaktiviert.",
+		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management).",
+		  "host": "Für Lokal: Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local'). Für VRM: Wird automatisch aus der VRM Portal-ID generiert.",
+		  "port": "Für Lokal: Der MQTT-Port (normalerweise 1883 oder 8883). Für VRM: Verwenden Sie 8883.",
+		  "username": "Für Lokal: Normalerweise leer (nicht für Victron-Geräte benötigt). Für VRM: Ihre VRM-Portal-E-Mail-Adresse.",
+		  "password": "Für Lokal: Passwort für das Victron-Gerät (standardmäßig leer, nicht Ihr VRM-Passwort). Für VRM: Ihr VRM-Portal-Passwort.",
+		  "ssl": "Für Lokal: Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung. Für VRM: Muss aktiviert sein (SSL erforderlich).",
 		  "root_topic_prefix": "Root-Topic-Präfix bei Nutzung über ein MQTT-Gateway.",
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
 		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich momentan wie 'full').",
-		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen."
+		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
+		  "vrm_portal_id": "Nur für VRM-Verbindungen erforderlich. Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
 		}
 	  }
 	}
@@ -31,7 +35,8 @@
 	"step": {
 	  "init": {
 		"data": {
-		  "host": "Victron-Venus-Hostname oder IP",
+		  "connection_type": "Verbindungstyp",
+		  "host": "Hostname oder IP-Adresse",
 		  "port": "MQTT-Port",
 		  "username": "Benutzername",
 		  "password": "Passwort",
@@ -39,25 +44,30 @@
 		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
 		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
 		  "operation_mode": "Betriebsmodus",
-		  "excluded_devices": "Ignorierte Geräte"
+		  "excluded_devices": "Ignorierte Geräte",
+		  "vrm_portal_id": "VRM Portal-ID"
 		},
 		"data_description": {
-		  "host": "Hostname oder IP-Adresse des Victron-Geräts, meist mDNS-Name wie 'venus.local'",
-		  "port": "Der MQTT-Port auf dem Host. Standard ist 1883.",
-		  "username": "Benutzername für das Victron-Gerät, standardmäßig leer lassen. Dies ist NICHT Ihr VRM-Benutzername.",
-		  "password": "Passwort für das Victron-Gerät, standardmäßig leer lassen. Dies ist NICHT Ihr VRM-Passwort.",
-		  "ssl": "Gibt an, ob SSL Verschlüsselung zur Verbindung mit dem Victron-Gerät verwendet wird. Normalerweise deaktiviert.",
+		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management).",
+		  "host": "Für Lokal: Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local'). Für VRM: Wird automatisch aus der VRM Portal-ID generiert.",
+		  "port": "Für Lokal: Der MQTT-Port (normalerweise 1883 oder 8883). Für VRM: Verwenden Sie 8883.",
+		  "username": "Für Lokal: Normalerweise leer (nicht für Victron-Geräte benötigt). Für VRM: Ihre VRM-Portal-E-Mail-Adresse.",
+		  "password": "Für Lokal: Passwort für das Victron-Gerät (standardmäßig leer, nicht Ihr VRM-Passwort). Für VRM: Ihr VRM-Portal-Passwort.",
+		  "ssl": "Für Lokal: Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung. Für VRM: Muss aktiviert sein (SSL erforderlich).",
 		  "root_topic_prefix": "Root-Topic-Präfix bei Nutzung über ein MQTT-Gateway.",
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
 		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich heute wie 'full').",
-		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen."
+		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
+		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
 		}
 	  }
 	},
 	"error": {
 	  "cannot_connect": "Verbindung zum Host ist fehlgeschlagen",
 	  "invalid_auth": "Authentifizierungsfehler",
-	  "unknown": "Unbekannter Fehler"
+	  "unknown": "Unbekannter Fehler",
+	  "vrm_portal_id_required": "VRM Portal-ID ist für VRM-Verbindungen erforderlich",
+	  "vrm_portal_id_invalid": "VRM Portal-ID enthält ungültige Zeichen. Sie sollte nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten."
 	},
 	"abort": {
 	  "already_configured": "Bereits konfiguriert",
@@ -415,5 +425,20 @@
 	  "vebus_inverter_current_limit": { "name": "Wechselrichter Stromlimit" },
 	  "multiplus_assist_current_boost_factor": { "name": "Assist-Strom-Boost-Faktor" }
 	}
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "local": "Lokal (Direkte Verbindung zum Venus-Gerät)",
+        "vrm": "VRM (Victron Remote Management Cloud)"
+      }
+    },
+    "operation_mode": {
+      "options": {
+        "experimental": "Experimentell (möglicherweise instabil)",
+        "full": "Vollständig (Sensoren + steuerbare Entitäten)",
+        "read_only": "Nur lesen (nur Sensoren & Binärsensoren)"
+      }
+    }
   }
 }

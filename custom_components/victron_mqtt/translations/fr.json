@@ -3,7 +3,8 @@
     "step": {
       "user": {
         "data": {
-          "host": "Nom d'hôte ou IP de Victron venus",
+          "connection_type": "Type de connexion",
+          "host": "Nom d'hôte ou adresse IP",
           "port": "Port MQTT",
           "username": "Nom d'utilisateur",
           "password": "Mot de passe",
@@ -14,11 +15,12 @@
           "excluded_devices": "Appareils exclus"
         },
         "data_description": {
-          "host": "Nom d'hôte ou adresse IP de l'appareil Victron, généralement un nom mDNS comme 'venus.local'",
-          "port": "Le port MQTT sur l'hôte. Normalement, c'est 1883.",
-          "username": "Nom d'utilisateur pour l'appareil Victron, par défaut vide. Ce n'est pas votre nom d'utilisateur VRM.",
-          "password": "Mot de passe pour l'appareil Victron, par défaut vide. Ce n'est pas votre mot de passe VRM.",
-          "ssl": "Indique s'il faut utiliser SSL pour se connecter à l'appareil Victron. Normalement, il est désactivé.",
+          "connection_type": "Choisissez entre une connexion locale (directe au dispositif Venus) ou une connexion cloud VRM (Victron Remote Management).",
+          "host": "Pour Local : Nom d'hôte ou adresse IP du dispositif Victron (par exemple, 'venus.local'). Pour VRM : Utilisez 'mqtt.victronenergy.com'",
+          "port": "Pour Local : Le port MQTT (généralement 1883 ou 8883). Pour VRM : Utilisez 8883.",
+          "username": "Pour Local : Généralement vide (non requis pour les dispositifs Victron). Pour VRM : Votre adresse e-mail du portail VRM.",
+          "password": "Pour Local : Mot de passe pour le dispositif Victron (par défaut vide, pas votre mot de passe VRM). Pour VRM : Votre mot de passe du portail VRM.",
+          "ssl": "Pour Local : Généralement désactivé sauf si vous utilisez une connexion sécurisée. Pour VRM : Doit être activé (SSL requis).",
           "root_topic_prefix": "Préfixe du sujet racine s'il est utilisé via une passerelle MQTT.",
           "update_frequency": "Fréquence de mise à jour en secondes. La valeur par défaut est de 30 secondes. Mettre à 0 pour mettre à jour en permanence.",
           "operation_mode": "Le mode de fonctionnement contrôle les types d'entités Home Assistant qui sont créés. 'read_only' n'expose que les capteurs et les binary_sensors (pas d'entités inscriptibles), 'full' expose tous les types d'entités (capteurs, binary_sensors, nombres, sélections, commutateurs), 'experimental' est réservé pour une utilisation future (se comporte comme 'full' aujourd'hui).",
@@ -31,7 +33,8 @@
     "step": {
       "init": {
         "data": {
-          "host": "Nom d'hôte ou IP de Victron venus",
+          "connection_type": "Type de connexion",
+          "host": "Nom d'hôte ou adresse IP",
           "port": "Port MQTT",
           "username": "Nom d'utilisateur",
           "password": "Mot de passe",
@@ -42,11 +45,12 @@
           "excluded_devices": "Appareils exclus"
         },
         "data_description": {
-          "host": "Nom d'hôte ou adresse IP de l'appareil Victron, généralement un nom mDNS comme 'venus.local'",
-          "port": "Le port MQTT sur l'hôte. Normalement, c'est 1883.",
-          "username": "Nom d'utilisateur pour l'appareil Victron, par défaut vide. Ce n'est pas votre nom d'utilisateur VRM.",
-          "password": "Mot de passe pour l'appareil Victron, par défaut vide. Ce n'est pas votre mot de passe VRM.",
-          "ssl": "Indique s'il faut utiliser SSL pour se connecter à l'appareil Victron. Normalement, il est désactivé.",
+          "connection_type": "Choisissez entre une connexion locale (directe au dispositif Venus) ou une connexion cloud VRM (Victron Remote Management).",
+          "host": "Pour Local : Nom d'hôte ou adresse IP du dispositif Victron (par exemple, 'venus.local'). Pour VRM : Utilisez 'mqtt.victronenergy.com'",
+          "port": "Pour Local : Le port MQTT (généralement 1883 ou 8883). Pour VRM : Utilisez 8883.",
+          "username": "Pour Local : Généralement vide (non requis pour les dispositifs Victron). Pour VRM : Votre adresse e-mail du portail VRM.",
+          "password": "Pour Local : Mot de passe pour le dispositif Victron (par défaut vide, pas votre mot de passe VRM). Pour VRM : Votre mot de passe du portail VRM.",
+          "ssl": "Pour Local : Généralement désactivé sauf si vous utilisez une connexion sécurisée. Pour VRM : Doit être activé (SSL requis).",
           "root_topic_prefix": "Préfixe du sujet racine s'il est utilisé via une passerelle MQTT.",
           "update_frequency": "Fréquence de mise à jour en secondes. La valeur par défaut est de 30 secondes. Mettre à 0 pour mettre à jour en permanence.",
           "operation_mode": "Le mode de fonctionnement contrôle les types d'entités Home Assistant qui sont créés. 'read_only' n'expose que les capteurs et les binary_sensors (pas d'entités inscriptibles), 'full' expose tous les types d'entités (capteurs, binary_sensors, nombres, sélections, commutateurs), 'experimental' est réservé pour une utilisation future (se comporte comme 'full' aujourd'hui).",
@@ -1144,6 +1148,21 @@
       },
       "multiplus_assist_current_boost_factor": {
         "name": "Facteur d'amplification du courant d'assistance"
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "local": "Local (Connexion directe au dispositif Venus)",
+        "vrm": "VRM (Cloud Victron Remote Management)"
+      }
+    },
+    "operation_mode": {
+      "options": {
+        "read_only": "Lecture seule (capteurs et capteurs binaires uniquement)",
+        "full": "Complet (capteurs + entités contrôlables)",
+        "experimental": "Expérimental (peut être instable)"
       }
     }
   }

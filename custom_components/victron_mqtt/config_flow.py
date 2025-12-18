@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import logging
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlparse
 
@@ -38,6 +39,7 @@ from homeassistant.helpers.selector import (
 from homeassistant.helpers.service_info.ssdp import SsdpServiceInfo
 
 from .const import (
+    CONF_CONNECTION_TYPE,
     CONF_ELEVATED_TRACING,
     CONF_EXCLUDED_DEVICES,
     CONF_INSTALLATION_ID,
@@ -47,11 +49,16 @@ from .const import (
     CONF_SERIAL,
     CONF_SIMPLE_NAMING,
     CONF_UPDATE_FREQUENCY_SECONDS,
+    CONF_VRM_PORTAL_ID,
+    CONNECTION_TYPE_LOCAL,
+    CONNECTION_TYPE_VRM,
     DEFAULT_HOST,
     DEFAULT_PORT,
     DEFAULT_SIMPLE_NAMING,
     DEFAULT_UPDATE_FREQUENCY_SECONDS,
     DOMAIN,
+    VRM_BROKER_PORT,
+    get_vrm_broker_url,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,10 +82,33 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
         else op_mode_default
     )
 
+    # Determine connection type and set VRM-specific defaults
+    connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
+    vrm_portal_id = defaults.get(CONF_VRM_PORTAL_ID, "")
+    
+    if connection_type == CONNECTION_TYPE_VRM and vrm_portal_id:
+        default_host = get_vrm_broker_url(vrm_portal_id)
+        default_port = VRM_BROKER_PORT
+        default_ssl = True
+    else:
+        default_host = defaults.get(CONF_HOST, DEFAULT_HOST)
+        default_port = defaults.get(CONF_PORT, DEFAULT_PORT)
+        default_ssl = defaults.get(CONF_SSL, False)
+
     return vol.Schema(
         {
-            vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, DEFAULT_HOST)): str,
-            vol.Required(CONF_PORT, default=defaults.get(CONF_PORT, DEFAULT_PORT)): int,
+            vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
+                SelectSelectorConfig(
+                    options=[CONNECTION_TYPE_LOCAL, CONNECTION_TYPE_VRM],
+                    translation_key="connection_type",
+                )
+            ),
+            vol.Optional(
+                CONF_VRM_PORTAL_ID,
+                description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
+            ): str,
+            vol.Required(CONF_HOST, default=default_host): str,
+            vol.Required(CONF_PORT, default=default_port): int,
             # Using suggested_value to be able to set empty string as default
             vol.Optional(
                 CONF_USERNAME,
@@ -88,23 +118,15 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
                 CONF_PASSWORD,
                 description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
             ): str,
-            vol.Required(CONF_SSL, default=defaults.get(CONF_SSL, False)): bool,
+            vol.Required(CONF_SSL, default=default_ssl): bool,
             vol.Required(CONF_OPERATION_MODE, default=op_default): SelectSelector(
                 SelectSelectorConfig(
                     options=[
-                        SelectOptionDict(
-                            value=OperationMode.READ_ONLY.value,
-                            label="Read-only (sensors & binary sensors only)",
-                        ),
-                        SelectOptionDict(
-                            value=OperationMode.FULL.value,
-                            label="Full (sensors + controllable entities)",
-                        ),
-                        SelectOptionDict(
-                            value=OperationMode.EXPERIMENTAL.value,
-                            label="Experimental (may be unstable)",
-                        ),
-                    ]
+                        OperationMode.READ_ONLY.value,
+                        OperationMode.FULL.value,
+                        OperationMode.EXPERIMENTAL.value,
+                    ],
+                    translation_key="operation_mode",
                 )
             ),
             vol.Optional(
@@ -170,6 +192,30 @@ async def validate_input(data: dict[str, Any]) -> str:
     return hub.installation_id
 
 
+def _process_vrm_portal_id(user_input: dict[str, Any]) -> tuple[bool, str]:
+    """Process VRM Portal ID and generate broker URL if VRM connection.
+    
+    Args:
+        user_input: The user input dictionary
+        
+    Returns:
+        Tuple of (success, error_message). If success is True, error_message is empty.
+    """
+    if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
+        vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
+        if not vrm_portal_id:
+            return False, "vrm_portal_id_required"
+        
+        # Validate portal ID format (alphanumeric)
+        if not vrm_portal_id.replace("-", "").replace("_", "").isalnum():
+            return False, "vrm_portal_id_invalid"
+        
+        # Generate the VRM broker host from portal ID using the calculation logic
+        user_input[CONF_HOST] = get_vrm_broker_url(vrm_portal_id)
+    
+    return True, ""
+
+
 class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for victronvenus."""
 
@@ -190,6 +236,17 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             _LOGGER.info("User input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host if VRM connection type
+            success, error_msg = _process_vrm_portal_id(user_input)
+            if not success:
+                errors["base"] = error_msg
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=_get_user_schema(MappingProxyType(user_input)),
+                    errors=errors,
+                )
+            
             data = {**user_input, CONF_SERIAL: self.serial, CONF_MODEL: self.model_name}
             data = {
                 k: v for k, v in data.items() if v is not None
@@ -337,6 +394,7 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_INSTALLATION_ID: self.installation_id,
                 CONF_MODEL: self.model_name,
                 CONF_SIMPLE_NAMING: DEFAULT_SIMPLE_NAMING,
+                CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
             },
         )
 
@@ -353,6 +411,16 @@ class VictronMQTTOptionsFlow(OptionsFlow):
         )
         if user_input is not None:
             _LOGGER.info("User input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host if VRM connection type
+            success, error_msg = _process_vrm_portal_id(user_input)
+            if not success:
+                return self.async_show_form(
+                    step_id="init",
+                    data_schema=self._get_options_schema(),
+                    errors={"base": error_msg},
+                )
+            
             try:
                 await validate_input(user_input)
             except AuthenticationError:

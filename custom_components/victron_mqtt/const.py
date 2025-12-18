@@ -15,6 +15,8 @@ CONF_OPERATION_MODE = "operation_mode"
 CONF_EXCLUDED_DEVICES = "excluded_devices"
 CONF_SIMPLE_NAMING = "simple_naming"
 CONF_ELEVATED_TRACING = "elevated_tracing"
+CONF_CONNECTION_TYPE = "connection_type"
+CONF_VRM_PORTAL_ID = "vrm_portal_id"
 
 DEVICE_MESSAGE = "device"
 SENSOR_MESSAGE = "sensor"
@@ -22,6 +24,30 @@ SENSOR_MESSAGE = "sensor"
 DEFAULT_HOST = "venus.local."
 DEFAULT_PORT = 1883
 DEFAULT_UPDATE_FREQUENCY_SECONDS = 30
+
+# Connection types
+CONNECTION_TYPE_LOCAL = "local"
+CONNECTION_TYPE_VRM = "vrm"
+
+# VRM defaults
+VRM_BROKER_PORT = 8883
+VRM_BROKER_KEEPALIVE = 60
+
+
+def get_vrm_broker_url(portal_id: str) -> str:
+    """Generate VRM broker URL from portal ID.
+    
+    Args:
+        portal_id: The VRM Portal ID
+        
+    Returns:
+        The VRM broker URL in format mqtt{INDEX}.victronenergy.com
+    """
+    sum_chars = 0
+    for character in portal_id.lower().strip():
+        sum_chars += ord(character)
+    broker_index = sum_chars % 128
+    return f"mqtt{broker_index}.victronenergy.com"
 
 # Service names
 SERVICE_PUBLISH = "publish"

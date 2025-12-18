@@ -3,7 +3,8 @@
     "step": {
       "user": {
         "data": {
-          "host": "Amfitrió o IP de Victron venus",
+          "connection_type": "Tipus de connexió",
+          "host": "Amfitrió o adreça IP",
           "port": "Port MQTT",
           "username": "Nom d'usuari",
           "password": "Contrasenya",
@@ -14,11 +15,12 @@
           "excluded_devices": "Dispositius Exclosos"
         },
         "data_description": {
-          "host": "Nom d'amfitrió o direcció IP del dispositiu Victron, normalment un nom mDNS com 'venus.local'.",
-          "port": "El port MQTT de l'amfitrió. Normalment 1883.",
-          "username": "Nom d'usuari del dispositiu Victron, per defecte és buit. Aquest no és el nom d'usuari de VRM.",
-          "password": "La contrasenya del dispositiu Victron, per defecte és buida. Aquesta no és la contrasenya de VRM.",
-          "ssl": "Indica si fer servir SSL per a connectar-se al dispositiu Victron. Normalment ha d'estar deshabilitat.",
+          "connection_type": "Trieu entre connexió local (directa al dispositiu Venus) o connexió al núvol VRM (Victron Remote Management).",
+          "host": "Per Local: Nom d'amfitrió o adreça IP del dispositiu Victron (per exemple, 'venus.local'). Per VRM: Utilitzeu 'mqtt.victronenergy.com'",
+          "port": "Per Local: El port MQTT (normalment 1883 o 8883). Per VRM: Utilitzeu 8883.",
+          "username": "Per Local: Normalment buit (no necessari pels dispositius Victron). Per VRM: La vostra adreça de correu electrònic del portal VRM.",
+          "password": "Per Local: Contrasenya del dispositiu Victron (per defecte buida, no la vostra contrasenya VRM). Per VRM: La vostra contrasenya del portal VRM.",
+          "ssl": "Per Local: Normalment deshabilitat tret que utilitzeu una connexió segura. Per VRM: Ha d'estar habilitat (SSL obligatori).",
           "root_topic_prefix": "Prefixe del tòpic arrel si es fa servir a través d'una porta d'accés MQTT.",
           "update_frequency": "Freqüència d'actualització en segons. Per defecte és 30 segons. Estableix a 0 per actualitzar sempre.",
           "operation_mode": "El mode d'operació controla quins tipus d'entitats de Home Assistant es creen. 'read_only' només exposa sensors i sensors binaris (entitats només de lectura), 'full' exposa tots els tipus d'entitats (sensors, sensors binaris, números, selectors, interruptors), 'experimental' està reservat per a un ús futur (es comporta com 'full' actualment).",
@@ -31,7 +33,8 @@
     "step": {
       "init": {
         "data": {
-          "host": "Amfitrió o IP de Victron venus",
+          "connection_type": "Tipus de connexió",
+          "host": "Amfitrió o adreça IP",
           "port": "Port MQTT",
           "username": "Nom d'usuari",
           "password": "Contrasenya",
@@ -42,11 +45,12 @@
           "excluded_devices": "Dispositius Exclosos"
         },
         "data_description": {
-          "host": "Nom d'amfitrió o direcció IP del dispositiu Victron, normalment un nom mDNS com 'venus.local'.",
-          "port": "El port MQTT de l'amfitrió. Normalment 1883.",
-          "username": "Nom d'usuari del dispositiu Victron, per defecte és buit. Aquest no és el nom d'usuari de VRM.",
-          "password": "La contrasenya del dispositiu Victron, per defecte és buida. Aquesta no és la contrasenya de VRM.",
-          "ssl": "Indica si fer servir SSL per a connectar-se al dispositiu Victron. Normalment ha d'estar deshabilitat.",
+          "connection_type": "Trieu entre connexió local (directa al dispositiu Venus) o connexió al núvol VRM (Victron Remote Management).",
+          "host": "Per Local: Nom d'amfitrió o adreça IP del dispositiu Victron (per exemple, 'venus.local'). Per VRM: Utilitzeu 'mqtt.victronenergy.com'",
+          "port": "Per Local: El port MQTT (normalment 1883 o 8883). Per VRM: Utilitzeu 8883.",
+          "username": "Per Local: Normalment buit (no necessari pels dispositius Victron). Per VRM: La vostra adreça de correu electrònic del portal VRM.",
+          "password": "Per Local: Contrasenya del dispositiu Victron (per defecte buida, no la vostra contrasenya VRM). Per VRM: La vostra contrasenya del portal VRM.",
+          "ssl": "Per Local: Normalment deshabilitat tret que utilitzeu una connexió segura. Per VRM: Ha d'estar habilitat (SSL obligatori).",
           "root_topic_prefix": "Prefixe del tòpic arrel si es fa servir a través d'una porta d'accés MQTT.",
           "update_frequency": "Freqüència d'actualització en segons. Per defecte és 30 segons. Estableix a 0 per actualitzar sempre.",
           "operation_mode": "El mode d'operació controla quins tipus d'entitats de Home Assistant es creen. 'read_only' només exposa sensors i sensors binaris (entitats només de lectura), 'full' exposa tots els tipus d'entitats (sensors, sensors binaris, números, selectors, interruptors), 'experimental' està reservat per a un ús futur (es comporta com 'full' actualment).",
@@ -1072,6 +1076,21 @@
       },
       "multiplus_assist_current_boost_factor": {
         "name": "Factor d'augment de corrent d'assistència"
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "local": "Local (Connexió directa al dispositiu Venus)",
+        "vrm": "VRM (Núvol Victron Remote Management)"
+      }
+    },
+    "operation_mode": {
+      "options": {
+        "read_only": "Només lectura (sensors i sensors binaris només)",
+        "full": "Complet (sensors + entitats controlables)",
+        "experimental": "Experimental (pot ser inestable)"
       }
     }
   }
