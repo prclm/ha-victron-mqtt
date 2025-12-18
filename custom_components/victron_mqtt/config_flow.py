@@ -70,31 +70,13 @@ DEVICE_CODES: Sequence[SelectOptionDict] = [
 ]
 
 
-def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.Schema:
-    """Get the user data schema with optional defaults."""
+def _get_connection_type_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.Schema:
+    """Get the connection type selection schema."""
     if defaults is None:
         defaults = MappingProxyType({})
-    # Ensure operation_mode default is a string value (not an Enum instance)
-    op_mode_default = defaults.get(CONF_OPERATION_MODE, OperationMode.FULL.value)
-    op_default = (
-        op_mode_default.value
-        if isinstance(op_mode_default, OperationMode)
-        else op_mode_default
-    )
-
-    # Determine connection type and set VRM-specific defaults
-    connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
-    vrm_portal_id = defaults.get(CONF_VRM_PORTAL_ID, "")
     
-    if connection_type == CONNECTION_TYPE_VRM and vrm_portal_id:
-        default_host = get_vrm_broker_url(vrm_portal_id)
-        default_port = VRM_BROKER_PORT
-        default_ssl = True
-    else:
-        default_host = defaults.get(CONF_HOST, DEFAULT_HOST)
-        default_port = defaults.get(CONF_PORT, DEFAULT_PORT)
-        default_ssl = defaults.get(CONF_SSL, False)
-
+    connection_type = defaults.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
+    
     return vol.Schema(
         {
             vol.Required(CONF_CONNECTION_TYPE, default=connection_type): SelectSelector(
@@ -103,13 +85,23 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
                     translation_key="connection_type",
                 )
             ),
-            vol.Optional(
-                CONF_VRM_PORTAL_ID,
-                description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
-            ): str,
+        }
+    )
+
+
+def _get_local_connection_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.Schema:
+    """Get the local connection configuration schema."""
+    if defaults is None:
+        defaults = MappingProxyType({})
+    
+    default_host = defaults.get(CONF_HOST, DEFAULT_HOST)
+    default_port = defaults.get(CONF_PORT, DEFAULT_PORT)
+    default_ssl = defaults.get(CONF_SSL, False)
+    
+    return vol.Schema(
+        {
             vol.Required(CONF_HOST, default=default_host): str,
             vol.Required(CONF_PORT, default=default_port): int,
-            # Using suggested_value to be able to set empty string as default
             vol.Optional(
                 CONF_USERNAME,
                 description={"suggested_value": f"{defaults.get(CONF_USERNAME, '')}"},
@@ -119,6 +111,48 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
                 description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
             ): str,
             vol.Required(CONF_SSL, default=default_ssl): bool,
+        }
+    )
+
+
+def _get_vrm_connection_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.Schema:
+    """Get the VRM connection configuration schema."""
+    if defaults is None:
+        defaults = MappingProxyType({})
+    
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_VRM_PORTAL_ID,
+                description={"suggested_value": f"{defaults.get(CONF_VRM_PORTAL_ID, '')}"},
+            ): str,
+            vol.Required(
+                CONF_USERNAME,
+                description={"suggested_value": f"{defaults.get(CONF_USERNAME, '')}"},
+            ): str,
+            vol.Required(
+                CONF_PASSWORD,
+                description={"suggested_value": f"{defaults.get(CONF_PASSWORD, '')}"},
+            ): str,
+        }
+    )
+
+
+def _get_additional_settings_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.Schema:
+    """Get the additional settings schema."""
+    if defaults is None:
+        defaults = MappingProxyType({})
+    
+    # Ensure operation_mode default is a string value (not an Enum instance)
+    op_mode_default = defaults.get(CONF_OPERATION_MODE, OperationMode.FULL.value)
+    op_default = (
+        op_mode_default.value
+        if isinstance(op_mode_default, OperationMode)
+        else op_mode_default
+    )
+    
+    return vol.Schema(
+        {
             vol.Required(CONF_OPERATION_MODE, default=op_default): SelectSelector(
                 SelectSelectorConfig(
                     options=[
@@ -164,9 +198,6 @@ def _get_user_schema(defaults: MappingProxyType[str, Any] | None = None) -> vol.
     )
 
 
-STEP_USER_DATA_SCHEMA = _get_user_schema()
-
-
 async def validate_input(data: dict[str, Any]) -> str:
     """Validate the user input allows us to connect.
 
@@ -192,28 +223,28 @@ async def validate_input(data: dict[str, Any]) -> str:
     return hub.installation_id
 
 
-def _process_vrm_portal_id(user_input: dict[str, Any]) -> tuple[bool, str]:
-    """Process VRM Portal ID and generate broker URL if VRM connection.
+def _process_vrm_portal_id(vrm_portal_id: str) -> tuple[bool, str, str, int]:
+    """Process VRM Portal ID and generate broker URL.
     
     Args:
-        user_input: The user input dictionary
+        vrm_portal_id: The VRM Portal ID
         
     Returns:
-        Tuple of (success, error_message). If success is True, error_message is empty.
+        Tuple of (success, error_message, host, port). If success is False, host and port are empty.
     """
-    if user_input.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_VRM:
-        vrm_portal_id = user_input.get(CONF_VRM_PORTAL_ID, "").strip()
-        if not vrm_portal_id:
-            return False, "vrm_portal_id_required"
-        
-        # Validate portal ID format (alphanumeric)
-        if not vrm_portal_id.replace("-", "").replace("_", "").isalnum():
-            return False, "vrm_portal_id_invalid"
-        
-        # Generate the VRM broker host from portal ID using the calculation logic
-        user_input[CONF_HOST] = get_vrm_broker_url(vrm_portal_id)
+    vrm_portal_id = vrm_portal_id.strip()
+    if not vrm_portal_id:
+        return False, "vrm_portal_id_required", "", 0
     
-    return True, ""
+    # Validate portal ID format (alphanumeric)
+    if not vrm_portal_id.replace("-", "").replace("_", "").isalnum():
+        return False, "vrm_portal_id_invalid", "", 0
+    
+    # Generate the VRM broker host from portal ID using the calculation logic
+    host = get_vrm_broker_url(vrm_portal_id)
+    port = VRM_BROKER_PORT
+    
+    return True, "", host, port
 
 
 class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -228,26 +259,98 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
         self.installation_id: str | None = None
         self.friendly_name: str | None = None
         self.model_name: str | None = None
+        self.config_data: dict[str, Any] = {}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
+        """Handle the initial step - connection type selection."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            _LOGGER.info("User input received: %s", user_input)
+            _LOGGER.info("Connection type selected: %s", user_input)
+            self.config_data[CONF_CONNECTION_TYPE] = user_input[CONF_CONNECTION_TYPE]
             
-            # Process VRM Portal ID and generate host if VRM connection type
-            success, error_msg = _process_vrm_portal_id(user_input)
+            if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_LOCAL:
+                return await self.async_step_local()
+            else:
+                return await self.async_step_vrm()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=_get_connection_type_schema(),
+            errors=errors,
+        )
+
+    async def async_step_local(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle local connection configuration."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            _LOGGER.info("Local connection input received: %s", user_input)
+            self.config_data.update(user_input)
+            return await self.async_step_settings()
+
+        defaults = MappingProxyType(self.config_data)
+        return self.async_show_form(
+            step_id="local",
+            data_schema=_get_local_connection_schema(defaults),
+            errors=errors,
+        )
+
+    async def async_step_vrm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle VRM connection configuration."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            _LOGGER.info("VRM connection input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host
+            success, error_msg, host, port = _process_vrm_portal_id(
+                user_input.get(CONF_VRM_PORTAL_ID, "")
+            )
             if not success:
                 errors["base"] = error_msg
+                defaults = MappingProxyType({**self.config_data, **user_input})
                 return self.async_show_form(
-                    step_id="user",
-                    data_schema=_get_user_schema(MappingProxyType(user_input)),
+                    step_id="vrm",
+                    data_schema=_get_vrm_connection_schema(defaults),
                     errors=errors,
                 )
             
-            data = {**user_input, CONF_SERIAL: self.serial, CONF_MODEL: self.model_name}
+            # Store VRM-specific configuration
+            self.config_data[CONF_VRM_PORTAL_ID] = user_input[CONF_VRM_PORTAL_ID]
+            self.config_data[CONF_USERNAME] = user_input.get(CONF_USERNAME)
+            self.config_data[CONF_PASSWORD] = user_input.get(CONF_PASSWORD)
+            self.config_data[CONF_HOST] = host
+            self.config_data[CONF_PORT] = port
+            self.config_data[CONF_SSL] = True
+            
+            return await self.async_step_settings()
+
+        defaults = MappingProxyType(self.config_data)
+        return self.async_show_form(
+            step_id="vrm",
+            data_schema=_get_vrm_connection_schema(defaults),
+            errors=errors,
+        )
+
+    async def async_step_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle additional settings configuration."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            _LOGGER.info("Settings input received: %s", user_input)
+            self.config_data.update(user_input)
+            
+            # Prepare data for validation
+            data = {
+                **self.config_data,
+                CONF_SERIAL: self.serial,
+                CONF_MODEL: self.model_name,
+            }
             data = {
                 k: v for k, v in data.items() if v is not None
             }  # remove None values.
@@ -258,7 +361,7 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
                     "Successfully connected to Victron device: %s", installation_id
                 )
             except AuthenticationError:
-                _LOGGER.exception("Authentication failed during reauthentication")
+                _LOGGER.exception("Authentication failed during setup")
                 errors["base"] = "invalid_auth"
             except CannotConnectError:
                 _LOGGER.exception("Cannot connect to Victron device")
@@ -277,12 +380,12 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=title, data=data)
 
         if len(errors) > 0:
-            _LOGGER.warning("Showing form with errors: %s", errors)
-        else:
-            _LOGGER.info("Showing form without errors")
+            _LOGGER.warning("Showing settings form with errors: %s", errors)
+        
+        defaults = MappingProxyType(self.config_data)
         return self.async_show_form(
-            step_id="user",
-            data_schema=STEP_USER_DATA_SCHEMA,
+            step_id="settings",
+            data_schema=_get_additional_settings_schema(defaults),
             errors=errors,
         )
 
@@ -402,54 +505,124 @@ class VictronMQTTConfigFlow(ConfigFlow, domain=DOMAIN):
 class VictronMQTTOptionsFlow(OptionsFlow):
     """Handle options flow for Victron MQTT."""
 
+    def __init__(self) -> None:
+        """Initialize."""
+        self.config_data: dict[str, Any] = {}
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle options flow."""
+        """Handle options flow - connection type selection."""
         _LOGGER.info(
             "Initializing options flow. current config: %s", self.config_entry.data
         )
+        
+        # Initialize config_data with current configuration
+        self.config_data = dict(self.config_entry.data)
+        
         if user_input is not None:
-            _LOGGER.info("User input received: %s", user_input)
+            _LOGGER.info("Connection type selected in options: %s", user_input)
+            self.config_data[CONF_CONNECTION_TYPE] = user_input[CONF_CONNECTION_TYPE]
             
-            # Process VRM Portal ID and generate host if VRM connection type
-            success, error_msg = _process_vrm_portal_id(user_input)
+            if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_LOCAL:
+                return await self.async_step_local_options()
+            else:
+                return await self.async_step_vrm_options()
+
+        defaults = MappingProxyType(self.config_data)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=_get_connection_type_schema(defaults),
+        )
+
+    async def async_step_local_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle local connection configuration in options."""
+        if user_input is not None:
+            _LOGGER.info("Local connection options input received: %s", user_input)
+            self.config_data.update(user_input)
+            return await self.async_step_settings_options()
+
+        defaults = MappingProxyType(self.config_data)
+        return self.async_show_form(
+            step_id="local_options",
+            data_schema=_get_local_connection_schema(defaults),
+        )
+
+    async def async_step_vrm_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle VRM connection configuration in options."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            _LOGGER.info("VRM connection options input received: %s", user_input)
+            
+            # Process VRM Portal ID and generate host
+            success, error_msg, host, port = _process_vrm_portal_id(
+                user_input.get(CONF_VRM_PORTAL_ID, "")
+            )
             if not success:
+                errors["base"] = error_msg
+                defaults = MappingProxyType({**self.config_data, **user_input})
                 return self.async_show_form(
-                    step_id="init",
-                    data_schema=self._get_options_schema(),
-                    errors={"base": error_msg},
+                    step_id="vrm_options",
+                    data_schema=_get_vrm_connection_schema(defaults),
+                    errors=errors,
                 )
             
+            # Store VRM-specific configuration
+            self.config_data[CONF_VRM_PORTAL_ID] = user_input[CONF_VRM_PORTAL_ID]
+            self.config_data[CONF_USERNAME] = user_input.get(CONF_USERNAME)
+            self.config_data[CONF_PASSWORD] = user_input.get(CONF_PASSWORD)
+            self.config_data[CONF_HOST] = host
+            self.config_data[CONF_PORT] = port
+            self.config_data[CONF_SSL] = True
+            
+            return await self.async_step_settings_options()
+
+        defaults = MappingProxyType(self.config_data)
+        return self.async_show_form(
+            step_id="vrm_options",
+            data_schema=_get_vrm_connection_schema(defaults),
+            errors=errors,
+        )
+
+    async def async_step_settings_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle additional settings configuration in options."""
+        if user_input is not None:
+            _LOGGER.info("Settings options input received: %s", user_input)
+            self.config_data.update(user_input)
+            
             try:
-                await validate_input(user_input)
+                await validate_input(self.config_data)
             except AuthenticationError:
                 return self.async_show_form(
-                    step_id="init",
-                    data_schema=self._get_options_schema(),
+                    step_id="settings_options",
+                    data_schema=_get_additional_settings_schema(MappingProxyType(self.config_data)),
                     errors={"base": "invalid_auth"},
                 )
             except CannotConnectError:
                 return self.async_show_form(
-                    step_id="init",
-                    data_schema=self._get_options_schema(),
+                    step_id="settings_options",
+                    data_schema=_get_additional_settings_schema(MappingProxyType(self.config_data)),
                     errors={"base": "cannot_connect"},
                 )
             _LOGGER.info(
-                "Options flow completed successfully. new config: %s", user_input
+                "Options flow completed successfully. new config: %s", self.config_data
             )
             # Update the config entry with new data.
             self.hass.config_entries.async_update_entry(
-                self.config_entry, data=user_input
+                self.config_entry, data=self.config_data
             )
             # Reload the entry to apply the new options
             await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data={})
+        
+        defaults = MappingProxyType(self.config_data)
         return self.async_show_form(
-            step_id="init",
-            data_schema=self._get_options_schema(),
+            step_id="settings_options",
+            data_schema=_get_additional_settings_schema(defaults),
         )
-
-    def _get_options_schema(self) -> vol.Schema:
-        """Get the options schema with current values as defaults."""
-        return _get_user_schema(self.config_entry.data)
