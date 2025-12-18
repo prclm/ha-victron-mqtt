@@ -2,35 +2,65 @@
   "config": {
     "step": {
       "user": {
+        "title": "Connection Type",
+        "description": "Choose how to connect to your Victron system",
         "data": {
-          "connection_type": "Connection type",
-          "elevated_tracing": "Elevate tracing for topic",
-          "excluded_devices": "Excluded devices",
-          "host": "Hostname or IP address",
-          "operation_mode": "Operation mode",
-          "password": "Password",
-          "port": "MQTT port",
-          "root_topic_prefix": "Optional root topic prefix",
-          "simple_naming": "Simple naming (no installation id in entity ids)",
-          "ssl": "Use SSL",
-          "update_frequency": "Update frequency (seconds)",
-          "username": "Username",
-          "vrm_portal_id": "VRM Portal ID (Required for VRM only)"
+          "connection_type": "Connection type"
         },
         "data_description": {
-          "connection_type": "Choose between local connection (direct to Venus device) or VRM cloud connection (Victron Remote Management).",
-          "elevated_tracing": "For debugging purpose only: If substring is in topic those topics will have full traces",
-          "excluded_devices": "List of devices to exclude from being monitored.",
-          "host": "For Local: Hostname or IP address of Victron Device (e.g., 'venus.local'). For VRM: Auto-generated from VRM Portal ID.",
+          "connection_type": "Choose between local connection (direct to Venus device) or VRM cloud connection (Victron Remote Management)."
+        }
+      },
+      "local": {
+        "title": "Local Connection",
+        "description": "Configure connection to your local Venus device",
+        "data": {
+          "host": "Hostname or IP address",
+          "port": "MQTT port",
+          "username": "Username (optional)",
+          "password": "Password (optional)",
+          "ssl": "Use SSL"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of Victron Device (e.g., 'venus.local').",
+          "port": "The MQTT port (usually 1883 without SSL, 8883 with SSL).",
+          "username": "Usually empty (not needed by Victron devices).",
+          "password": "Password for the Victron Device (default is empty).",
+          "ssl": "Usually disabled unless using secure connection."
+        }
+      },
+      "vrm": {
+        "title": "VRM Connection",
+        "description": "Configure connection to Victron Remote Management",
+        "data": {
+          "vrm_portal_id": "VRM Portal ID",
+          "username": "VRM Username",
+          "password": "VRM Password"
+        },
+        "data_description": {
+          "vrm_portal_id": "Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID).",
+          "username": "Your VRM portal email address.",
+          "password": "Your VRM portal password."
+        }
+      },
+      "settings": {
+        "title": "Additional Settings",
+        "description": "Configure additional integration settings",
+        "data": {
+          "operation_mode": "Operation mode",
+          "simple_naming": "Simple naming (no installation id in entity ids)",
+          "root_topic_prefix": "Optional root topic prefix",
+          "update_frequency": "Update frequency (seconds)",
+          "excluded_devices": "Excluded devices",
+          "elevated_tracing": "Elevate tracing for topic"
+        },
+        "data_description": {
           "operation_mode": "Operation mode controls which Home Assistant entity types are created. 'read_only' exposes only sensors and binary_sensors (no writable entities), 'full' exposes all entity types (sensors, binary_sensors, numbers, selects, switches), 'experimental' is reserved for future use (behaves like 'full' today).",
-          "password": "For Local: Password for the Victron Device (default is empty, not your VRM password). For VRM: Your VRM portal password.",
-          "port": "For Local: The MQTT port (usually 1883 or 8883). For VRM: Use 8883.",
-          "root_topic_prefix": "Root topic prefix if used via MQTT gateway.",
           "simple_naming": "Use simple naming for entities, can work only when you have single Cerbo on the network.",
-          "ssl": "For Local: Usually disabled unless using secure connection. For VRM: Must be enabled (SSL required).",
+          "root_topic_prefix": "Root topic prefix if used via MQTT gateway.",
           "update_frequency": "Update frequency in seconds. Default is 30 seconds. Set to 0 to update always.",
-          "username": "For Local: Usually empty (not needed by Victron devices). For VRM: Your VRM portal email address.",
-          "vrm_portal_id": "Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID)"
+          "excluded_devices": "List of devices to exclude from being monitored.",
+          "elevated_tracing": "For debugging purpose only: If substring is in topic those topics will have full traces"
         }
       }
     }
@@ -1316,35 +1346,65 @@
     },
     "step": {
       "init": {
+        "title": "Connection Type",
+        "description": "Choose how to connect to your Victron system",
         "data": {
-          "connection_type": "Connection type",
-          "elevated_tracing": "Elevate tracing for topic",
-          "excluded_devices": "Excluded devices",
-          "host": "Hostname or IP address",
-          "operation_mode": "Operation mode",
-          "password": "Password",
-          "port": "MQTT port",
-          "root_topic_prefix": "Optional root topic prefix",
-          "simple_naming": "Simple naming (no installation id in entity ids)",
-          "ssl": "Use SSL",
-          "update_frequency": "Update frequency (seconds)",
-          "username": "Username",
-          "vrm_portal_id": "VRM Portal ID"
+          "connection_type": "Connection type"
         },
         "data_description": {
-          "connection_type": "Choose between local connection (direct to Venus device) or VRM cloud connection (Victron Remote Management).",
-          "elevated_tracing": "For debugging purpose only: If substring is in topic those topics will have full traces",
-          "excluded_devices": "List of devices to exclude from being monitored.",
-          "host": "For Local: Hostname or IP address of Victron Device (e.g., 'venus.local'). For VRM: Auto-generated from VRM Portal ID.",
+          "connection_type": "Choose between local connection (direct to Venus device) or VRM cloud connection (Victron Remote Management)."
+        }
+      },
+      "local_options": {
+        "title": "Local Connection",
+        "description": "Configure connection to your local Venus device",
+        "data": {
+          "host": "Hostname or IP address",
+          "port": "MQTT port",
+          "username": "Username (optional)",
+          "password": "Password (optional)",
+          "ssl": "Use SSL"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of Victron Device (e.g., 'venus.local').",
+          "port": "The MQTT port (usually 1883 without SSL, 8883 with SSL).",
+          "username": "Usually empty (not needed by Victron devices).",
+          "password": "Password for the Victron Device (default is empty).",
+          "ssl": "Usually disabled unless using secure connection."
+        }
+      },
+      "vrm_options": {
+        "title": "VRM Connection",
+        "description": "Configure connection to Victron Remote Management",
+        "data": {
+          "vrm_portal_id": "VRM Portal ID",
+          "username": "VRM Username",
+          "password": "VRM Password"
+        },
+        "data_description": {
+          "vrm_portal_id": "Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID).",
+          "username": "Your VRM portal email address.",
+          "password": "Your VRM portal password."
+        }
+      },
+      "settings_options": {
+        "title": "Additional Settings",
+        "description": "Configure additional integration settings",
+        "data": {
+          "operation_mode": "Operation mode",
+          "simple_naming": "Simple naming (no installation id in entity ids)",
+          "root_topic_prefix": "Optional root topic prefix",
+          "update_frequency": "Update frequency (seconds)",
+          "excluded_devices": "Excluded devices",
+          "elevated_tracing": "Elevate tracing for topic"
+        },
+        "data_description": {
           "operation_mode": "Operation mode controls which Home Assistant entity types are created. 'read_only' exposes only sensors and binary_sensors (no writable entities), 'full' exposes all entity types (sensors, binary_sensors, numbers, selects, switches), 'experimental' is reserved for future use (behaves like 'full' today).",
-          "password": "For Local: Password for the Victron Device (default is empty, not your VRM password). For VRM: Your VRM portal password.",
-          "port": "For Local: The MQTT port (usually 1883 or 8883). For VRM: Use 8883.",
-          "root_topic_prefix": "Root topic prefix if used via MQTT gateway.",
           "simple_naming": "Use simple naming for entities, can work only when you have single Cerbo on the network.",
-          "ssl": "For Local: Usually disabled unless using secure connection. For VRM: Must be enabled (SSL required).",
+          "root_topic_prefix": "Root topic prefix if used via MQTT gateway.",
           "update_frequency": "Update frequency in seconds. Default is 30 seconds. Set to 0 to update always.",
-          "username": "For Local: Usually empty (not needed by Victron devices). For VRM: Your VRM portal email address.",
-          "vrm_portal_id": "Required only for VRM connections. Your VRM Portal ID (e.g., 'c0619ab123456'). The MQTT broker URL will be automatically generated as mqtt{INDEX}.victronenergy.com (where INDEX is calculated from your Portal ID). Leave empty for Local connections"
+          "excluded_devices": "List of devices to exclude from being monitored.",
+          "elevated_tracing": "For debugging purpose only: If substring is in topic those topics will have full traces"
         }
       }
     }

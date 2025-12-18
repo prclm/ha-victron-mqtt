@@ -2,31 +2,65 @@
   "config": {
 	"step": {
 	  "user": {
+		"title": "Verbindungstyp",
+		"description": "Wählen Sie, wie Sie sich mit Ihrem Victron-System verbinden möchten",
 		"data": {
-		  "connection_type": "Verbindungstyp",
-		  "host": "Hostname oder IP-Adresse",
-		  "port": "MQTT-Port",
-		  "username": "Benutzername",
-		  "password": "Passwort",
-		  "ssl": "SSL verwenden",
-		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
-		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
-		  "operation_mode": "Betriebsmodus",
-		  "excluded_devices": "Ignorierte Geräte",
-		  "vrm_portal_id": "VRM Portal-ID (Nur für VRM erforderlich)"
+		  "connection_type": "Verbindungstyp"
 		},
 		"data_description": {
-		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management).",
-		  "host": "Für Lokal: Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local'). Für VRM: Wird automatisch aus der VRM Portal-ID generiert.",
-		  "port": "Für Lokal: Der MQTT-Port (normalerweise 1883 oder 8883). Für VRM: Verwenden Sie 8883.",
-		  "username": "Für Lokal: Normalerweise leer (nicht für Victron-Geräte benötigt). Für VRM: Ihre VRM-Portal-E-Mail-Adresse.",
-		  "password": "Für Lokal: Passwort für das Victron-Gerät (standardmäßig leer, nicht Ihr VRM-Passwort). Für VRM: Ihr VRM-Portal-Passwort.",
-		  "ssl": "Für Lokal: Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung. Für VRM: Muss aktiviert sein (SSL erforderlich).",
+		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management)."
+		}
+	  },
+	  "local": {
+		"title": "Lokale Verbindung",
+		"description": "Konfigurieren Sie die Verbindung zu Ihrem lokalen Venus-Gerät",
+		"data": {
+		  "host": "Hostname oder IP-Adresse",
+		  "port": "MQTT-Port",
+		  "username": "Benutzername (optional)",
+		  "password": "Passwort (optional)",
+		  "ssl": "SSL verwenden"
+		},
+		"data_description": {
+		  "host": "Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local').",
+		  "port": "Der MQTT-Port (normalerweise 1883 ohne SSL, 8883 mit SSL).",
+		  "username": "Normalerweise leer (nicht für Victron-Geräte benötigt).",
+		  "password": "Passwort für das Victron-Gerät (standardmäßig leer).",
+		  "ssl": "Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung."
+		}
+	  },
+	  "vrm": {
+		"title": "VRM-Verbindung",
+		"description": "Konfigurieren Sie die Verbindung zu Victron Remote Management",
+		"data": {
+		  "vrm_portal_id": "VRM Portal-ID",
+		  "username": "VRM-Benutzername",
+		  "password": "VRM-Passwort"
+		},
+		"data_description": {
+		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert.",
+		  "username": "Ihre VRM-Portal-E-Mail-Adresse.",
+		  "password": "Ihr VRM-Portal-Passwort."
+		}
+	  },
+	  "settings": {
+		"title": "Zusätzliche Einstellungen",
+		"description": "Konfigurieren Sie zusätzliche Integrationseinstellungen",
+		"data": {
+		  "operation_mode": "Betriebsmodus",
+		  "simple_naming": "Einfache Benennung (keine Installations-ID in Entitäts-IDs)",
+		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
+		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
+		  "excluded_devices": "Ignorierte Geräte",
+		  "elevated_tracing": "Erweiterte Ablaufverfolgung für Topic"
+		},
+		"data_description": {
+		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich momentan wie 'full').",
+		  "simple_naming": "Verwenden Sie einfache Benennung für Entitäten, funktioniert nur, wenn Sie ein einzelnes Cerbo im Netzwerk haben.",
 		  "root_topic_prefix": "Root-Topic-Präfix bei Nutzung über ein MQTT-Gateway.",
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
-		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich momentan wie 'full').",
 		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
-		  "vrm_portal_id": "Nur für VRM-Verbindungen erforderlich. Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
+		  "elevated_tracing": "Nur für Debugging-Zwecke: Wenn Teilstring im Topic enthalten ist, werden diese Topics vollständig verfolgt."
 		}
 	  }
 	}
@@ -34,31 +68,65 @@
   "options": {
 	"step": {
 	  "init": {
+		"title": "Verbindungstyp",
+		"description": "Wählen Sie, wie Sie sich mit Ihrem Victron-System verbinden möchten",
 		"data": {
-		  "connection_type": "Verbindungstyp",
-		  "host": "Hostname oder IP-Adresse",
-		  "port": "MQTT-Port",
-		  "username": "Benutzername",
-		  "password": "Passwort",
-		  "ssl": "SSL verwenden",
-		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
-		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
-		  "operation_mode": "Betriebsmodus",
-		  "excluded_devices": "Ignorierte Geräte",
-		  "vrm_portal_id": "VRM Portal-ID"
+		  "connection_type": "Verbindungstyp"
 		},
 		"data_description": {
-		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management).",
-		  "host": "Für Lokal: Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local'). Für VRM: Wird automatisch aus der VRM Portal-ID generiert.",
-		  "port": "Für Lokal: Der MQTT-Port (normalerweise 1883 oder 8883). Für VRM: Verwenden Sie 8883.",
-		  "username": "Für Lokal: Normalerweise leer (nicht für Victron-Geräte benötigt). Für VRM: Ihre VRM-Portal-E-Mail-Adresse.",
-		  "password": "Für Lokal: Passwort für das Victron-Gerät (standardmäßig leer, nicht Ihr VRM-Passwort). Für VRM: Ihr VRM-Portal-Passwort.",
-		  "ssl": "Für Lokal: Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung. Für VRM: Muss aktiviert sein (SSL erforderlich).",
+		  "connection_type": "Wählen Sie zwischen lokaler Verbindung (direkt zum Venus-Gerät) oder VRM-Cloud-Verbindung (Victron Remote Management)."
+		}
+	  },
+	  "local_options": {
+		"title": "Lokale Verbindung",
+		"description": "Konfigurieren Sie die Verbindung zu Ihrem lokalen Venus-Gerät",
+		"data": {
+		  "host": "Hostname oder IP-Adresse",
+		  "port": "MQTT-Port",
+		  "username": "Benutzername (optional)",
+		  "password": "Passwort (optional)",
+		  "ssl": "SSL verwenden"
+		},
+		"data_description": {
+		  "host": "Hostname oder IP-Adresse des Victron-Geräts (z.B. 'venus.local').",
+		  "port": "Der MQTT-Port (normalerweise 1883 ohne SSL, 8883 mit SSL).",
+		  "username": "Normalerweise leer (nicht für Victron-Geräte benötigt).",
+		  "password": "Passwort für das Victron-Gerät (standardmäßig leer).",
+		  "ssl": "Normalerweise deaktiviert, es sei denn, Sie verwenden eine sichere Verbindung."
+		}
+	  },
+	  "vrm_options": {
+		"title": "VRM-Verbindung",
+		"description": "Konfigurieren Sie die Verbindung zu Victron Remote Management",
+		"data": {
+		  "vrm_portal_id": "VRM Portal-ID",
+		  "username": "VRM-Benutzername",
+		  "password": "VRM-Passwort"
+		},
+		"data_description": {
+		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert.",
+		  "username": "Ihre VRM-Portal-E-Mail-Adresse.",
+		  "password": "Ihr VRM-Portal-Passwort."
+		}
+	  },
+	  "settings_options": {
+		"title": "Zusätzliche Einstellungen",
+		"description": "Konfigurieren Sie zusätzliche Integrationseinstellungen",
+		"data": {
+		  "operation_mode": "Betriebsmodus",
+		  "simple_naming": "Einfache Benennung (keine Installations-ID in Entitäts-IDs)",
+		  "root_topic_prefix": "Optionaler Root-Topic-Präfix",
+		  "update_frequency": "Aktualisierungsintervall (Sekunden)",
+		  "excluded_devices": "Ignorierte Geräte",
+		  "elevated_tracing": "Erweiterte Ablaufverfolgung für Topic"
+		},
+		"data_description": {
+		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich heute wie 'full').",
+		  "simple_naming": "Verwenden Sie einfache Benennung für Entitäten, funktioniert nur, wenn Sie ein einzelnes Cerbo im Netzwerk haben.",
 		  "root_topic_prefix": "Root-Topic-Präfix bei Nutzung über ein MQTT-Gateway.",
 		  "update_frequency": "Aktualisierungsintervall in Sekunden. Standard ist 30 Sekunden. 0 = immer aktualisieren.",
-		  "operation_mode": "Der Betriebsmodus steuert, welche Home-Assistant-Entitätstypen erstellt werden. 'read_only' zeigt nur Sensoren und Binärsensoren (keine schreibbaren Entitäten), 'full' zeigt alle Entitätstypen (Sensoren, Binärsensoren, Zahlen, Auswahlfelder, Schalter), 'experimental' ist für zukünftige Nutzung reserviert (verhält sich heute wie 'full').",
 		  "excluded_devices": "Liste von Geräten, die nicht überwacht werden sollen.",
-		  "vrm_portal_id": "Ihre VRM Portal-ID (z.B. 'c0619ab123456'). Die MQTT-Broker-URL wird automatisch als mqtt{INDEX}.victronenergy.com (wobei INDEX aus Ihrer Portal-ID berechnet wird) generiert. Leer lassen für lokale Verbindungen."
+		  "elevated_tracing": "Nur für Debugging-Zwecke: Wenn Teilstring im Topic enthalten ist, werden diese Topics vollständig verfolgt."
 		}
 	  }
 	},
